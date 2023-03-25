@@ -1,12 +1,7 @@
-
-// Data logger
-  const int chipSelect = 4;
-
-// RTC Setup
+// Initialize RTC
   RTC_DS3231 rtc;
-//  char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};  
 
-// Initialize the Ethernet server library
+// Initialize the Ethernet server and client
   EthernetServer server(80);
   EthernetClient eth;
 
@@ -19,24 +14,18 @@
   unsigned long epoch;  
   EthernetUDP Udp;
 
-// Weather Variables
-  unsigned long wxUTC;
-  float Temp;
-  float Hum;
-  float Pres;
-  float Wsp;
-  float WGust;
-  float WDir;
-  float RTot;
-  float LightSen;
-  float SkyTemp;
-  float IRAmb;
-  float RSen;
-  float RSenD;
+// API Variables
   const char wxHost[] = "192.168.50.200";
   const char wxPath[] = "/";
   const char AIHost[] = "allskyai.com";
   const char AIPath[] = "/tfapi/v1/live?url=https://allsky.tristarobservatory.com/image.jpg";
 
-  DynamicJsonDocument wxJSON(250);
-  DynamicJsonDocument aiJSON(250);    
+  int shutterState = 0;                           // ASCOM shutterstate.  0=shutterOpen, 1=shutterClosed, 2=shutterOpening, 3=shutterClosing, 4=shutterError
+
+// JSON Documents to hold responses from sources
+  DynamicJsonDocument wxJSON(175);
+  DynamicJsonDocument aiJSON(175);    
+
+  
+
+ 
