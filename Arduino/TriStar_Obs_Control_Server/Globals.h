@@ -20,7 +20,8 @@
   const char AIHost[] = "allskyai.com";
   const char AIPath[] = "/tfapi/v1/live?url=https://allsky.tristarobservatory.com/image.jpg";
 
-  int shutterState = 0;                           // ASCOM shutterstate.  0=shutterOpen, 1=shutterClosed, 2=shutterOpening, 3=shutterClosing, 4=shutterError
+  int shutterState = 0;                       // ASCOM shutterstate.  0=shutterOpen, 1=shutterClosed, 2=shutterOpening, 3=shutterClosing, 4=shutterError
+  int isSafe = 0;                             // simple isSafe 1/0 flag.
 
 // JSON Documents to hold responses from sources
   DynamicJsonDocument wxJSON(175);

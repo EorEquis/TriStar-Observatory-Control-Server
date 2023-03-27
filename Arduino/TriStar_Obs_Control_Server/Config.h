@@ -11,10 +11,12 @@ VARIABLE                             VALUE           COMMENT                    
  */
 unsigned long lastAI = millis();
 unsigned long lastWX = millis();
+unsigned long lastCalcSafe = millis();
 float elapsedMillisAI = 0;
 float elapsedMillisWX = 0;
-int pollAIEvery = 120000;                       // Number of milliseconds to wait between polls of the AllSkyAI
-int pollWXEvery = 60000;                        // Number of milliseconds to wait between polls of the Weather Station
+int pollAIEvery = 10000;                       // Number of milliseconds to wait between polls of the AllSkyAI
+int pollWXEvery = 10000;                       // Number of milliseconds to wait between polls of the Weather Station
+int calcSafeEvery = 10000;                     // Number of milliseconds to wait between polls of the Weather Station
 
 #define WX_CLOUD_CLEAR_DELTA            16      //   If delta between ambient and sky temp >= this value, sky is clear.          SAFE
 #define WX_CLOUD_CLOUDY_DELTA           12      //   If delta between ambient and sky temp <= this value, sky is cloudy.       UNSAFE
@@ -23,8 +25,9 @@ int pollWXEvery = 60000;                        // Number of milliseconds to wai
                                                 //   Frequently changed (lowered), as rain sensor panel degrades
 #define WX_MAX_SAFE_WIND                10      //   Above this windspeed (MPH) is UNSAFE                                      UNSAFE
 #define WX_MAX_SAFE_GUST                15      //   Wind Gust above this speed (MPH) is UNSAFE                                UNSAFE
-#define WX_USE_RSEND                   YES      //   Use rian sensor's digital output?  If yes, then RSEND of 1 is             UNSAFE
+#define MAX_JSON_AGE                   300      //   Maximum age (in seconds) of any json source before UNSAFE                 UNSAFE
 
 // Uncomment these lines to enable features
 #define DEBUG                                   // Debug info to serial monitor
 //#define DELAY_FOR_SWITCH                      // Delay 10s at start of sketch to wait for network switch to come up
+#define WX_USE_RSEND                            //   Use rian sensor's digital output?  If defined, then RSEND of 1 is         UNSAFE

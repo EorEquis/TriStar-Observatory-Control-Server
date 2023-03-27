@@ -18,7 +18,7 @@ DynamicJsonDocument readJSON(const char * Host, const char * Path) {
   eth.println(F("Connection: close"));
   if (eth.println() == 0) {
     Serial.println(F("Failed to send request"));
-    eth                .stop();
+    eth.stop();
     return;
   }
 
@@ -53,4 +53,5 @@ DynamicJsonDocument readJSON(const char * Host, const char * Path) {
     eth.stop();
     return;
   }
+  return doc;
 }

@@ -86,6 +86,7 @@ void setup() {
   // API rest Variables
 
     rest.variable("shutterState", &shutterState);
+    rest.variable("isSafe", &isSafe);
         
   // Declare functions to be exposed to the API
     rest.function("roof_command", roof_command);
@@ -97,6 +98,9 @@ void setup() {
   // Weather
     wxJSON = readJSON(wxHost, wxPath);
     lastWX = millis();
+  // Calculate safety
+    isSafe = calcSafety(wxJSON, aiJSON);
+    
 // Start watchdog
   // wdt_enable(WDTO_30S);
 }
@@ -104,18 +108,30 @@ void setup() {
 
 void loop() {
 
-  if (millis() - lastAI >= pollWXEvery)
+  if (millis() - lastAI >= pollAIEvery)
     {
       aiJSON = readJSON(AIHost, AIPath);
       lastAI = millis();      
     }
 
-  if (millis() - lastAI >= pollAIEvery)
+  if (millis() - lastWX >= pollWXEvery)
     {
       wxJSON = readJSON(wxHost, wxPath);
       lastWX = millis();      
     }
+  // Calculate safety
 
+  if (millis() - lastCalcSafe >= calcSafeEvery)
+    {
+      isSafe = calcSafety(wxJSON, aiJSON);
+      #ifdef DEBUG
+        Serial.print("isSafe ");
+        Serial.println(isSafe);
+      #endif
+      lastCalcSafe = millis();      
+    }  
+
+    
   EthernetClient client = server.available();
   rest.handle(client);
 }
