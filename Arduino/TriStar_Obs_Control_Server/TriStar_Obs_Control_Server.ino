@@ -23,21 +23,20 @@ Modified :
     #include "sekrits.h"
     #include "Globals.h"   
 
-  // Create aREST instance
+  // Create aREST instance : Dunno why this doesn't work in Globals.h but it doesn't
     aREST rest = aREST();
     int roof_command(String command);    // This will eventually be O, C, H for open, close, halt
-    
+
 void setup() {
 
 // We seem to be unhappy if the switch isn't up when ethernet tries to come up.
-// Since they share a power supply, we wait for the switch to be up and running.
+// Since they may share a power supply, we wait for the switch to be up and running.
 
   #ifdef DELAY_FOR_SWITCH
     delay(10000);
   #endif
                     
 // Confirm hardware initialization if debugging 
-    
   #ifdef DEBUG
     Serial.begin(115200);
       while (!Serial) {
@@ -68,7 +67,6 @@ void setup() {
     #endif
 
 // RTC Setup
-
   if (! rtc.begin()) {
     #ifdef DEBUG
       Serial.println("Couldn't find RTC");
@@ -80,41 +78,44 @@ void setup() {
   
   setRTCTime();
 
-// API setup
-
+// aREST setup
+  // Name & ID
+    rest.set_id("OBSCON");
+    rest.set_name("Observatory_Control");
+    
   // API rest Variables
 
     rest.variable("shutterState", &shutterState);
-      
-
         
   // Declare functions to be exposed to the API
     rest.function("roof_command", roof_command);
-
-
-  // Give name & ID to the device (ID should be 6 characters long)
-    rest.set_id("OBSCON");
-    rest.set_name("Observatory_Control");
-
   
 // First polls
   // AllSky AI
-
-    aiJSON = readAllSkyAI(AIHost, AIPath);
-    #ifdef DEBUG
-      Serial.println(aiJSON["classification"].as<String>());
-      Serial.println(aiJSON["confidence"].as<float>());
-    #endif
-
+    aiJSON = readJSON(AIHost, AIPath);
+    lastAI = millis();
   // Weather
-    wxJSON = readWX(wxHost, wxPath);
-
+    wxJSON = readJSON(wxHost, wxPath);
+    lastWX = millis();
 // Start watchdog
   // wdt_enable(WDTO_30S);
 }
 
 
 void loop() {
+
+  if (millis() - lastAI >= pollWXEvery)
+    {
+      aiJSON = readJSON(AIHost, AIPath);
+      lastAI = millis();      
+    }
+
+  if (millis() - lastAI >= pollAIEvery)
+    {
+      wxJSON = readJSON(wxHost, wxPath);
+      lastWX = millis();      
+    }
+
   EthernetClient client = server.available();
   rest.handle(client);
 }

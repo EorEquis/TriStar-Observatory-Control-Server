@@ -9,6 +9,13 @@
 /*
 VARIABLE                             VALUE           COMMENT                                                              SAFE/UNSAFE
  */
+unsigned long lastAI = millis();
+unsigned long lastWX = millis();
+float elapsedMillisAI = 0;
+float elapsedMillisWX = 0;
+int pollAIEvery = 120000;                       // Number of milliseconds to wait between polls of the AllSkyAI
+int pollWXEvery = 60000;                        // Number of milliseconds to wait between polls of the Weather Station
+
 #define WX_CLOUD_CLEAR_DELTA            16      //   If delta between ambient and sky temp >= this value, sky is clear.          SAFE
 #define WX_CLOUD_CLOUDY_DELTA           12      //   If delta between ambient and sky temp <= this value, sky is cloudy.       UNSAFE
                                                 //   Between these values is "partly cloudy" or "light clouds"                   SAFE
