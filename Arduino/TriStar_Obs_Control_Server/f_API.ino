@@ -33,7 +33,26 @@
         String classification = aiJSON["classification"].as<String>();
         float confidence = aiJSON["confidence"].as<float>();
         
-        if(Temp - SkyTemp <= WX_CLOUD_CLOUDY_DELTA || classification == "heavy_clouds" || classification == "precipitation" || Wsp >= WX_MAX_SAFE_WIND || WGust >= WX_MAX_SAFE_GUST)
+        // ***************
+        // Gnarly multi-condition IF statement.  The AI can be a bit eager sometimes :)
+        //
+        // * If the WX station reports cloudy, it's probabl cloudy enough to close.
+        // * If the AI thinks there's heavy clouds and WX station is anything but clear, we close.  
+        // * If the AI thinks it's raining, and (the WX station is antyhing but clear OR the wx station thinks it's raining) we close.
+        //    * The AI sometimes thinks bugs and bird poop are rain, see....
+        // * If the WX station thinks it's raining, we close.
+        // * If the weather station thinks it's too windy, we close.
+        //
+        // ***************
+        
+        if  (
+              Temp - SkyTemp <= WX_CLOUD_CLOUDY_DELTA                                                                             // WX Station Cloudy
+              || (classification == "heavy_clouds" && (Temp - SkyTemp <= WX_CLOUD_CLEAR_DELTA))                                   // AI heavy clouds and WX station not clear
+              || (classification == "precipitation" && ((Temp - SkyTemp <= WX_CLOUD_CLEAR_DELTA) || RSen <= WX_RAINSENSOR_WET))   // AI Precip and WX Clouds or Rain
+              || RSen <= WX_RAINSENSOR_WET                                                                                        // WX rain
+              || Wsp >= WX_MAX_SAFE_WIND                                                                                          // Windy
+              || WGust >= WX_MAX_SAFE_GUST                                                                                        // Gusty
+            )                                                                             
           {
             #ifdef DEBUG
               Serial.println("Unsafe criteria met.  UNSAFE");
