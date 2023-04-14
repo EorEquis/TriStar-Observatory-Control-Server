@@ -11,15 +11,15 @@ DynamicJsonDocument readJSON(const char * Host, const char * Path) {
 
   // Send HTTP request
   eth.print(F("GET "));
-  delay(2);         // Appears we were overflowing the send buffer.  A serial.print "fixed" it, so trying a brief delay.
+  delay(3);         // Appears we were overflowing the send buffer.  A serial.print "fixed" it, so trying a brief delay.
   eth.print(Path);
-  delay(2);
+  delay(3);
   eth.println(F(" HTTP/1.0"));
-  delay(2);
+  delay(3);
   eth.print(F("Host: "));
-  delay(2);
+  delay(3);
   eth.println(Host);
-  delay(2);
+  delay(3);
   eth.println(F("Connection: close"));
   if (eth.println() == 0) {
     Serial.println(F("Failed to send request"));

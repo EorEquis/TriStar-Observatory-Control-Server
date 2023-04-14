@@ -104,7 +104,9 @@ void setup() {
     isSafe = calcSafety(wxJSON, aiJSON);
     
 // Start watchdog
-  // wdt_enable(WDTO_30S);
+  wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
+  delay(3000);          // Done so that the Arduino doesn't keep resetting infinitely in case of wrong configuration
+  wdt_enable(WDTO_8S);  // Enable the watchdog with a timeout of 8 seconds
 }
 
 
@@ -133,7 +135,13 @@ void loop() {
       lastCalcSafe = millis();      
     }  
 
-    
+  if (millis() - lastWDT >= resetWatchdogEvery)
+    {
+      wdt_reset();
+      lastWDT = millis();      
+    }
+  // Calculate safety
+      
   EthernetClient client = server.available();
   rest.handle(client);
 }

@@ -12,11 +12,15 @@ VARIABLE                             VALUE           COMMENT                    
 unsigned long lastAI = millis();
 unsigned long lastWX = millis();
 unsigned long lastCalcSafe = millis();
+unsigned long lastWDT = millis();
 float elapsedMillisAI = 0;
 float elapsedMillisWX = 0;
-int pollAIEvery = 10000;                       // Number of milliseconds to wait between polls of the AllSkyAI
-int pollWXEvery = 10000;                       // Number of milliseconds to wait between polls of the Weather Station
-int calcSafeEvery = 10000;                     // Number of milliseconds to wait between polls of the Weather Station
+float elapsedMillisWDT = 0;
+
+int pollAIEvery = 10000;                        // Number of milliseconds to wait between polls of the AllSkyAI
+int pollWXEvery = 10000;                        // Number of milliseconds to wait between polls of the Weather Station
+int calcSafeEvery = 10000;                      // Number of milliseconds to wait between calculating the isSafe flag
+int resetWatchdogEvery = 5000;                  // Number of miliseconds to reset the watchdog, since 8s is WDT max, and we poll less often
 
 #define WX_CLOUD_CLEAR_DELTA            16      //   If delta between ambient and sky temp >= this value, sky is clear.          SAFE
 #define WX_CLOUD_CLOUDY_DELTA           12      //   If delta between ambient and sky temp <= this value, sky is cloudy.       UNSAFE
