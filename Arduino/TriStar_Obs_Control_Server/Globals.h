@@ -24,8 +24,8 @@
   int isSafe = 0;                             // simple isSafe 1/0 flag.
 
 // JSON Documents to hold responses from sources
-  DynamicJsonDocument wxJSON(175);
-  DynamicJsonDocument aiJSON(175);    
+  DynamicJsonDocument wxJSON(195);
+  DynamicJsonDocument aiJSON(130);    
 
   
 

@@ -11,10 +11,15 @@ DynamicJsonDocument readJSON(const char * Host, const char * Path) {
 
   // Send HTTP request
   eth.print(F("GET "));
+  delay(2);         // Appears we were overflowing the send buffer.  A serial.print "fixed" it, so trying a brief delay.
   eth.print(Path);
+  delay(2);
   eth.println(F(" HTTP/1.0"));
+  delay(2);
   eth.print(F("Host: "));
+  delay(2);
   eth.println(Host);
+  delay(2);
   eth.println(F("Connection: close"));
   if (eth.println() == 0) {
     Serial.println(F("Failed to send request"));
@@ -42,7 +47,7 @@ DynamicJsonDocument readJSON(const char * Host, const char * Path) {
 
   // Allocate the JSON document
   // Use arduinojson.org/v6/assistant to compute the capacity.
-  const size_t capacity = 250;
+  const size_t capacity = 195;
   DynamicJsonDocument doc(capacity);
 
   // Parse JSON object

@@ -74,7 +74,9 @@ void setup() {
     // don't do anything more:
     while (1);
   }
-  Serial.println("RTC Initialized");
+  #ifdef DEBUG
+    Serial.println("RTC Initialized");
+  #endif
   
   setRTCTime();
 
