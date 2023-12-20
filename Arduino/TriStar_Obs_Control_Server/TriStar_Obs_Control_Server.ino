@@ -4,8 +4,12 @@ TriStar Obs Control Server
 Arduino aREST server that handles weather/safety/roof info
 
 Created : 2023-03-21  Eor
-  // Starting with several example programs smashed together.  We'll get there.
+    // Starting with several example programs smashed together.  We'll get there.
 Modified : 
+          2023-12-19 Eor : Oh look, I'm awake and finally want to do something with this.
+              Addition of new mini pc requires networked roof controller.
+              Also removing AI safety for now, AllSky is down, and it was never great anyway
+          2023-12-19 Eor : Bring in elements of current TriStar Dome firmware
 */
 
 // Includes
@@ -25,7 +29,7 @@ Modified :
 
   // Create aREST instance : Dunno why this doesn't work in Globals.h but it doesn't
     aREST rest = aREST();
-    int roof_command(String command);    // This will eventually be O, C, H for open, close, halt
+    
 
 void setup() {
 
@@ -44,6 +48,17 @@ void setup() {
       }
   #endif
 
+// Begin serial to SMC
+  smcSerial.begin(38400);
+
+// Reset SMC when Arduino starts up
+  resetSMC();
+  
+// Set up pins
+  #ifdef USEBUTTON
+    pinMode(buttonPin, INPUT);
+  #endif
+    
 // Ethernet Setup
   // start the Ethernet connection and the server:
     Ethernet.begin(mac, ip);
@@ -94,14 +109,15 @@ void setup() {
     rest.function("roof_command", roof_command);
   
 // First polls
-  // AllSky AI
-    aiJSON = readJSON(AIHost, AIPath);
-    lastAI = millis();
   // Weather
     wxJSON = readJSON(wxHost, wxPath);
     lastWX = millis();
   // Calculate safety
-    isSafe = calcSafety(wxJSON, aiJSON);
+    isSafe = calcSafety(wxJSON);
+    lastCalcSafe = millis();
+  // Set the startup roof values
+    shutterState = getRoofInfo();
+    lastRoof = millis();
     
 // Start watchdog
   wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
@@ -112,35 +128,61 @@ void setup() {
 
 void loop() {
 
-  if (millis() - lastAI >= pollAIEvery)
-    {
-      aiJSON = readJSON(AIHost, AIPath);
-      lastAI = millis();      
-    }
+  // Check weather
+    if (millis() - lastWX >= pollWXEvery)
+      {
+        wxJSON = readJSON(wxHost, wxPath);
+        lastWX = millis();      
+      }
 
-  if (millis() - lastWX >= pollWXEvery)
-    {
-      wxJSON = readJSON(wxHost, wxPath);
-      lastWX = millis();      
-    }
   // Calculate safety
+    if (millis() - lastCalcSafe >= calcSafeEvery)
+      {
+        isSafe = calcSafety(wxJSON);
+        #ifdef DEBUG
+          Serial.print("isSafe ");
+          Serial.println(isSafe);
+        #endif
+        lastCalcSafe = millis();      
+      }  
+  // Get roof info
+    if (millis() - lastRoof > roofInfoDelay)
+      {
+        shutterState=getRoofInfo();
+        #ifdef USEBUTTON
+          buttonState = digitalRead(buttonPin);
+          if (buttonState==HIGH)
+            {
+              if (millis() - lastButton > buttonDelay)   // debounce button for buttonDelay
+                {
+                  lastButton=millis();
+                  buttonPressed = true;
+                  handleButton();                
+                }
+            }
+        #endif
+        #ifdef DEBUG
+            Serial.print("getRoofInfo() called, shutterState is ");
+            Serial.println(shutterState);
+            Serial.print("Roof limitStatus : ");
+            Serial.println(limitStatus);
+            Serial.print("Roof errorStatus : ");
+            Serial.println(errorStatus);
+            Serial.print("Roof currentSpeed : ");
+            Serial.println(currentSpeed);
+            Serial.print("Roof targetSpeed : ");
+            Serial.println(targetSpeed);            
+        #endif 
+        lastRoof = millis();        
+      }   // end if millis
+        
+  // Pet the dog
+    if (millis() - lastWDT >= resetWatchdogEvery)
+      {
+        wdt_reset();
+        lastWDT = millis();      
+      }
 
-  if (millis() - lastCalcSafe >= calcSafeEvery)
-    {
-      isSafe = calcSafety(wxJSON, aiJSON);
-      #ifdef DEBUG
-        Serial.print("isSafe ");
-        Serial.println(isSafe);
-      #endif
-      lastCalcSafe = millis();      
-    }  
-
-  if (millis() - lastWDT >= resetWatchdogEvery)
-    {
-      wdt_reset();
-      lastWDT = millis();      
-    }
-  // Calculate safety
       
   EthernetClient client = server.available();
   rest.handle(client);
