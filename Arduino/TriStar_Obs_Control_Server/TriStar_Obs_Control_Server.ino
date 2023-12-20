@@ -10,6 +10,8 @@ Modified :
               Addition of new mini pc requires networked roof controller.
               Also removing AI safety for now, AllSky is down, and it was never great anyway
           2023-12-19 Eor : Bring in elements of current TriStar Dome firmware
+          2023-12-20 Eor : Change serial communication w/ SMC to use Mega's Serial.  Breaking change for Uno
+          2023-12-20 Eor : Cleanup unused variables, merge/rename some ino files for more consistent naming, add/clean up some comments
 */
 
 // Includes
@@ -168,10 +170,10 @@ void loop() {
             Serial.println(limitStatus);
             Serial.print("Roof errorStatus : ");
             Serial.println(errorStatus);
-            Serial.print("Roof currentSpeed : ");
-            Serial.println(currentSpeed);
-            Serial.print("Roof targetSpeed : ");
-            Serial.println(targetSpeed);            
+            Serial.print("Roof currentRoofSpeed : ");
+            Serial.println(currentRoofSpeed);
+            Serial.print("Roof targetRoofSpeed : ");
+            Serial.println(targetRoofSpeed);            
         #endif 
         lastRoof = millis();        
       }   // end if millis

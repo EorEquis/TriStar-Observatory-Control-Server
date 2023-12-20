@@ -1,6 +1,6 @@
 // API Custom functions
 
-  // Calculate Safety
+  // Calculate Safety based on weather data (may add more sources later)
     int calcSafety(DynamicJsonDocument wxJSON) 
       {
         DateTime now = rtc.now();
@@ -54,8 +54,10 @@
         
         // Conditions must be safe
         return 1;
-      }    
+      } // END calcSafety
+      
   // Move the roof
+  // TODO : Flesh this out with actual roof commands 2023-12-20
     int roof_command(String command) 
       {
         if(command == "open" || command == "close" || command == "halt" || command == "status")

@@ -9,12 +9,7 @@
 /*
 VARIABLE                             VALUE           COMMENT                                                              SAFE/UNSAFE
  */
-unsigned long lastWX = millis();
-unsigned long lastCalcSafe = millis();
-unsigned long lastWDT = millis();
-unsigned long lastRoof = millis();
-float elapsedMillisWX = 0;
-float elapsedMillisWDT = 0;
+
 
 int pollWXEvery = 10000;                        // Number of milliseconds to wait between polls of the Weather Station
 int calcSafeEvery = 10000;                      // Number of milliseconds to wait between calculating the isSafe flag
@@ -30,8 +25,8 @@ int resetWatchdogEvery = 5000;                  // Number of miliseconds to rese
 #define MAX_JSON_AGE                   300      //   Maximum age (in seconds) of any json source before UNSAFE                 UNSAFE
 
 // Uncomment these lines to enable features
-  #define DEBUG                                   // Debug info to serial monitor
-  //#define DELAY_FOR_SWITCH                      // Delay 10s at start of sketch to wait for network switch to come up
-  //#define WX_USE_RSEND                          // Use rain sensor's digital output?  If defined, then RSEND of 1 is           UNSAFE
-  //#define USE_ALLSKY_AI                         // Make use of allskyai.com's allsky AI for safety
-  //#define USEBUTTON                             // Uncomment to allow use of manual roof open/close button
+#define DEBUG                                   // Debug info to serial monitor
+//#define DELAY_FOR_SWITCH                      // Delay 10s at start of sketch to wait for network switch to come up
+//#define WX_USE_RSEND                          // Use rain sensor's digital output?  If defined, then RSEND of 1 is           UNSAFE
+//#define USE_ALLSKY_AI                         // Make use of allskyai.com's allsky AI for safety
+//#define USEBUTTON                             // Uncomment to allow use of manual roof open/close button
