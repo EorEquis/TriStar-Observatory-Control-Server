@@ -59,5 +59,7 @@
       eth.stop();
       return;
     }
+    strWX = "";
+    serializeJson(doc, strWX);
     return doc;
   } // END readJSON()

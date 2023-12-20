@@ -106,6 +106,7 @@ void setup() {
 
     rest.variable("shutterState", &shutterState);
     rest.variable("isSafe", &isSafe);
+    rest.variable("strWX", &strWX);
         
   // Declare functions to be exposed to the API
     rest.function("roof_command", roof_command);

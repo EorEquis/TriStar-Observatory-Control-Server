@@ -1,5 +1,18 @@
 // Roof functions
 
+  // Check if connected to the SMC
+    int checkSMC()
+      {
+        getRoofInfo();
+        if(limitStatus == 65279)
+          {
+            return 0;
+          }
+        else
+          {
+            return 1;
+          }
+      }
   // Open the roof
     int openRoof()
       {
@@ -7,11 +20,13 @@
           {
             setMotorSpeed(roofMotorSpeed);
             shutterState = SHUTTEROPENING;
+            lastRoof = millis();
             return 0;               // Success, opening roof
             //return SHUTTEROPENING;
           }
           else
           {
+            lastRoof = millis();
             return 1;               // Error, roof is not closed, cannot be opened.
             //return SHUTTERERROR;
           }
@@ -24,11 +39,13 @@
           {
             setMotorSpeed(-1 * roofMotorSpeed);
             shutterState = SHUTTERCLOSING;
+            lastRoof = millis();
             return 0;               // Success, closing roof.
             //return SHUTTERCLOSING;
           }
         else
           {
+            lastRoof = millis();
             return 1;               // Error, roof is not open, cannot be closed.
             //return SHUTTERERROR;
           }     

@@ -60,12 +60,27 @@
   // TODO : Flesh this out with actual roof commands 2023-12-20
     int roof_command(String command) 
       {
-        if(command == "open" || command == "close" || command == "halt" || command == "status")
+        if (command == "abort")
           {
-            return 0;
+            abortRoof();    // No return value, stops motor immediately
           }
-        else
+        else if(command == "open")
           {
+            return openRoof();
+          }
+        else if(command == "close")
+          {
+            return closeRoof();
+          }
+        else if(command == "reset")
+          {
+            resetSMC();
+            shutterState=getRoofInfo();
+            lastRoof = millis();
+          }          
+        else  // Invalid command, return error.
+          {
+            
             return 1;
           }
       }
