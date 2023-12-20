@@ -91,4 +91,4 @@
 
 
 // SoftwareSerial for communication w/ SMC
-  SoftwareSerial smcSerial = SoftwareSerial(rxPin, txPin);      
+//  SoftwareSerial Serial1 = SoftwareSerial(rxPin, txPin);      

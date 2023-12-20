@@ -2,16 +2,16 @@
 int readSMCByte()
   {
     char c;
-    if(smcSerial.readBytes(&c, 1) == 0){ return -1; }
+    if(Serial1.readBytes(&c, 1) == 0){ return -1; }
     return (byte)c;
   }
 
 unsigned char setMotorLimit(unsigned char  limitID, unsigned int limitValue)
   {
-    smcSerial.write(0xA2);
-    smcSerial.write(limitID);
-    smcSerial.write(limitValue & 0x7F);
-    smcSerial.write(limitValue >> 7);
+    Serial1.write(0xA2);
+    Serial1.write(limitID);
+    Serial1.write(limitValue & 0x7F);
+    Serial1.write(limitValue >> 7);
     return readSMCByte();
   }
 
@@ -21,15 +21,15 @@ void setMotorSpeed(int speed)
   {
     if (speed < 0)
     {
-      smcSerial.write(0x86);  // motor reverse command
+      Serial1.write(0x86);  // motor reverse command
       speed = -speed;  // make speed positive
     }
     else
     {
-      smcSerial.write(0x85);  // motor forward command
+      Serial1.write(0x85);  // motor forward command
     }
-    smcSerial.write(speed & 0x1F);
-    smcSerial.write(speed >> 5);
+    Serial1.write(speed & 0x1F);
+    Serial1.write(speed >> 5);
   }
 
 // returns the specified variable as an unsigned integer.
@@ -37,8 +37,8 @@ void setMotorSpeed(int speed)
 // should be typecast as an int.
 int getSMCVariable(unsigned char variableID)
   {
-    smcSerial.write(0xA1);
-    smcSerial.write(variableID);
+    Serial1.write(0xA1);
+    Serial1.write(variableID);
     return readSMCByte() + 256 * readSMCByte();
   }
 
@@ -54,5 +54,5 @@ void resetSMC()
     delay(10);
   
     // Set up motor controller.
-    smcSerial.write(0xAA);  // send baud-indicator byte
+    Serial1.write(0xAA);  // send baud-indicator byte
   }

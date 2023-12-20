@@ -49,7 +49,7 @@ void setup() {
   #endif
 
 // Begin serial to SMC
-  smcSerial.begin(38400);
+  Serial1.begin(19200);
 
 // Reset SMC when Arduino starts up
   resetSMC();
