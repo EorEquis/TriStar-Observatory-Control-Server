@@ -31,6 +31,8 @@
     int shutterState = 1;                       // ASCOM shutterstate.  0=shutterOpen, 1=shutterClosed, 2=shutterOpening, 3=shutterClosing, 4=shutterError
     int isSafe = 0;                             // simple isSafe 1/0 flag.
     int roof_command(String command);           // Valid values are "open", "close", and "abort".  open and close return 0 (success) or 1 (failure)
+    String requestTime;
+    
     //String someText = "This is a string";
   
   // JSON Documents to hold responses from sources

@@ -84,3 +84,10 @@
             return 1;
           }
       }
+
+  // Convert DateTime to String
+    String convertDateTime(DateTime datetime)
+      {
+        String str = String(datetime.year(), DEC) + '/' + String(datetime.month(), DEC) + '/' + String(datetime.day(), DEC) + " " + String(datetime.hour(), DEC) + ':' + String(datetime.minute(), DEC) + ':' + String(datetime.second(), DEC);
+        return str;
+      }

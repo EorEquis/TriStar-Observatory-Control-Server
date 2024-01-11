@@ -12,6 +12,7 @@ Modified :
           2023-12-19 Eor : Bring in elements of current TriStar Dome firmware
           2023-12-20 Eor : Change serial communication w/ SMC to use Mega's Serial.  Breaking change for Uno
           2023-12-20 Eor : Cleanup unused variables, merge/rename some ino files for more consistent naming, add/clean up some comments
+          2024-01-10 Eor : Add timestamp, formatting is balls, will fix it some day (We all know I probably won't)
 */
 
 // Includes
@@ -107,6 +108,7 @@ void setup() {
     rest.variable("shutterState", &shutterState);
     rest.variable("isSafe", &isSafe);
     rest.variable("strWX", &strWX);
+    rest.variable("RequestTimeUTC", &requestTime);
         
   // Declare functions to be exposed to the API
     rest.function("roof_command", roof_command);
@@ -115,6 +117,7 @@ void setup() {
   // Weather
     wxJSON = readJSON(wxHost, wxPath);
     lastWX = millis();
+    requestTime = convertDateTime(rtc.now());
   // Calculate safety
     isSafe = calcSafety(wxJSON);
     lastCalcSafe = millis();
@@ -135,6 +138,7 @@ void loop() {
     if (millis() - lastWX >= pollWXEvery)
       {
         wxJSON = readJSON(wxHost, wxPath);
+        requestTime = convertDateTime(rtc.now());
         lastWX = millis();      
       }
 
@@ -145,6 +149,10 @@ void loop() {
         #ifdef DEBUG
           Serial.print("isSafe ");
           Serial.println(isSafe);
+          Serial.print("rtc.now");
+          //Serial.println(String(rtc.now().year(), DEC));
+          Serial.print("requestTime ");
+          Serial.println(requestTime);
         #endif
         lastCalcSafe = millis();      
       }  
