@@ -1,11 +1,8 @@
 // Global variables
 
   // Timing variables
-    unsigned long lastWX = millis();
-    unsigned long lastCalcSafe = millis();
     unsigned long lastWDT = millis();
     unsigned long lastRoof = millis();
-    float elapsedMillisWX = 0;
     float elapsedMillisWDT = 0;
   
   // Initialize RTC
@@ -25,20 +22,13 @@
     EthernetUDP Udp;
   
   // API Variables
-    const char wxHost[] = "192.168.50.200";
-    const char wxPath[] = "/";
-  
+ 
     int shutterState = 1;                       // ASCOM shutterstate.  0=shutterOpen, 1=shutterClosed, 2=shutterOpening, 3=shutterClosing, 4=shutterError
-    int isSafe = 0;                             // simple isSafe 1/0 flag.
     int roof_command(String command);           // Valid values are "open", "close", and "abort".  open and close return 0 (success) or 1 (failure)
-    String requestTime;
+    String requestTime;                         // Strings to hold roof status and clinet request time, in case driver wants to compare for safety
+    String roofStatusTime;
     
-    //String someText = "This is a string";
-  
-  // JSON Documents to hold responses from sources
-    DynamicJsonDocument wxJSON(195);
-    String strWX;
-  
+
   //  Setup for roof button
     #ifdef USEBUTTON
       const int buttonPin = 7;      // pin 7 connects to button   : Yellow

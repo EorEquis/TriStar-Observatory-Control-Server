@@ -13,6 +13,7 @@ Modified :
           2023-12-20 Eor : Change serial communication w/ SMC to use Mega's Serial.  Breaking change for Uno
           2023-12-20 Eor : Cleanup unused variables, merge/rename some ino files for more consistent naming, add/clean up some comments
           2024-01-10 Eor : Add timestamp, formatting is balls, will fix it some day (We all know I probably won't)
+          2024-01-12 Eor : Stripping out a bunch of stuff for a cleaner "roof control box"
 */
 
 // Includes
@@ -21,7 +22,6 @@ Modified :
     #include <aREST.h>
     #include <avr/wdt.h>  
     #include <EthernetUdp.h>  
-    #include <ArduinoJson.h>
     #include <RTClib.h>
     #include <SPI.h>
 
@@ -106,21 +106,13 @@ void setup() {
   // API rest Variables
 
     rest.variable("shutterState", &shutterState);
-    rest.variable("isSafe", &isSafe);
-    rest.variable("strWX", &strWX);
-    rest.variable("RequestTimeUTC", &requestTime);
+    rest.variable("requestTimeUTC", &requestTime);
+    rest.variable("roofStatusTimeUTC", &roofStatusTime);
         
   // Declare functions to be exposed to the API
     rest.function("roof_command", roof_command);
   
 // First polls
-  // Weather
-    wxJSON = readJSON(wxHost, wxPath);
-    lastWX = millis();
-    requestTime = convertDateTime(rtc.now());
-  // Calculate safety
-    isSafe = calcSafety(wxJSON);
-    lastCalcSafe = millis();
   // Set the startup roof values
     shutterState = getRoofInfo();
     lastRoof = millis();
@@ -134,28 +126,6 @@ void setup() {
 
 void loop() {
 
-  // Check weather
-    if (millis() - lastWX >= pollWXEvery)
-      {
-        wxJSON = readJSON(wxHost, wxPath);
-        requestTime = convertDateTime(rtc.now());
-        lastWX = millis();      
-      }
-
-  // Calculate safety
-    if (millis() - lastCalcSafe >= calcSafeEvery)
-      {
-        isSafe = calcSafety(wxJSON);
-        #ifdef DEBUG
-          Serial.print("isSafe ");
-          Serial.println(isSafe);
-          Serial.print("rtc.now");
-          //Serial.println(String(rtc.now().year(), DEC));
-          Serial.print("requestTime ");
-          Serial.println(requestTime);
-        #endif
-        lastCalcSafe = millis();      
-      }  
   // Get roof info
     if (millis() - lastRoof > roofInfoDelay)
       {
@@ -183,6 +153,8 @@ void loop() {
             Serial.println(currentRoofSpeed);
             Serial.print("Roof targetRoofSpeed : ");
             Serial.println(targetRoofSpeed);            
+            Serial.print("Roof Status Time : ");
+            Serial.println(roofStatusTime); 
         #endif 
         lastRoof = millis();        
       }   // end if millis
@@ -196,5 +168,10 @@ void loop() {
 
       
   EthernetClient client = server.available();
-  rest.handle(client);
+  if (client)
+    {
+      requestTime = convertDateTime(rtc.now());
+      rest.handle(client);  
+    }
+  
 }

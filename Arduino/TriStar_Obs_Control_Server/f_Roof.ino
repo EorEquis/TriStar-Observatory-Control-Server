@@ -89,6 +89,7 @@
       errorStatus = getSMCVariable(ERROR_STATUS);
       currentRoofSpeed = getSMCVariable(SPEED);
       targetRoofSpeed = getSMCVariable(TARGET_SPEED);
+      roofStatusTime = convertDateTime(rtc.now());
     
       if (currentRoofSpeed == 0 && currentRoofSpeed == targetRoofSpeed)
         {
