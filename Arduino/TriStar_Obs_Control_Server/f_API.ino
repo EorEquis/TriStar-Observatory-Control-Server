@@ -31,7 +31,7 @@
   // Convert DateTime to String
     String convertDateTime(DateTime datetime)
       {
-        String str = padLeadingZero(String(datetime.year(), DEC)) + "-" + padLeadingZero(String(datetime.month(), DEC)) + "-" + padLeadingZero(String(datetime.day(), DEC)) + " " + padLeadingZero(String(datetime.hour(), DEC)) + ":" + padLeadingZero(String(datetime.minute(), DEC)) + ":" + padLeadingZero(String(datetime.second(), DEC));
+        String str = String(datetime.year(), DEC) + "-" + padLeadingZero(String(datetime.month(), DEC)) + "-" + padLeadingZero(String(datetime.day(), DEC)) + "T" + padLeadingZero(String(datetime.hour(), DEC)) + ":" + padLeadingZero(String(datetime.minute(), DEC)) + ":" + padLeadingZero(String(datetime.second(), DEC));
         return str;
       }
 

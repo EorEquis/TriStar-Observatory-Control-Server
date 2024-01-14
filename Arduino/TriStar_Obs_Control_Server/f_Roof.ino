@@ -1,4 +1,8 @@
 // Roof functions
+// Return values for thse functions are :
+//  0 - Success
+//  1 - Roof is already in requested position
+//  2 - Roof is moving
 
   // Check if connected to the SMC
     int checkSMC()
@@ -22,13 +26,16 @@
             shutterState = SHUTTEROPENING;
             lastRoof = millis();
             return 0;               // Success, opening roof
-            //return SHUTTEROPENING;
           }
-          else
+        else if (shutterState == SHUTTEROPEN)
           {
             lastRoof = millis();
-            return 1;               // Error, roof is not closed, cannot be opened.
-            //return SHUTTERERROR;
+            return 1;               // Error, roof is already open.
+          }
+        else if (shutterState == SHUTTEROPENING || shutterState == SHUTTERCLOSING)
+          {
+            lastRoof = millis();
+            return 2;               // Error, roof is moving
           }
       } // END openRoof()
   
@@ -43,12 +50,16 @@
             return 0;               // Success, closing roof.
             //return SHUTTERCLOSING;
           }
-        else
+        else if (shutterState == SHUTTERCLOSED)
           {
             lastRoof = millis();
-            return 1;               // Error, roof is not open, cannot be closed.
-            //return SHUTTERERROR;
-          }     
+            return 1;               // Error, roof is already closed.
+          }
+        else if (shutterState == SHUTTEROPENING || shutterState == SHUTTERCLOSING)
+          {
+            lastRoof = millis();
+            return 2;               // Error, roof is moving
+          }    
       } // END closeRoof()
   
   // Halt the roof immediately
