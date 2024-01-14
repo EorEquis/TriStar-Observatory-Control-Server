@@ -20,7 +20,7 @@ This is, on a practical level, not achievable.  Some drivers are proprietary and
 
 ## Use in your observatory
 
-* Everything here is specific to my particular use cases, setup, and devices/data.  This code will *absolutely* not work for you out of the box.  It's here as a starting point to give ideas.
+* Everything here is specific to my particular use cases, setup, and devices/data.  This code will *absolutely not* work for you out of the box.  It's here as a starting point to give ideas.
 
 ## Things failed!  My roof ran past a limit and fell into the swamp, my weather data is wrong, my flat panel doesn't work, the API is sending Satanic messages, or things are otherwise behaving in a non-norminal manner!
 
