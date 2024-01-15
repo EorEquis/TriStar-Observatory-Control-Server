@@ -1,5 +1,5 @@
 // Roof functions
-// Return values for thse functions are :
+// Return values for the movement functions are :
 //  0 - Success
 //  1 - Roof is already in requested position
 //  2 - Roof is moving
@@ -100,8 +100,7 @@
       errorStatus = getSMCVariable(ERROR_STATUS);
       currentRoofSpeed = getSMCVariable(SPEED);
       targetRoofSpeed = getSMCVariable(TARGET_SPEED);
-      roofStatusTime = convertDateTime(rtc.now());
-    
+
       if (currentRoofSpeed == 0 && currentRoofSpeed == targetRoofSpeed)
         {
           roofMotorState=STOPPED;

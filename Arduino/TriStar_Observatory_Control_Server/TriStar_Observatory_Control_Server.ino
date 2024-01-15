@@ -14,6 +14,7 @@ Modified :
           2023-12-20 Eor : Cleanup unused variables, merge/rename some ino files for more consistent naming, add/clean up some comments
           2024-01-10 Eor : Add timestamp, formatting is balls, will fix it some day (We all know I probably won't)
           2024-01-12 Eor : Stripping out a bunch of stuff for a cleaner "roof control box"
+          2024-01-14 Eor : Begin multi-source safety implementation
 */
 
 // Includes
@@ -21,7 +22,8 @@ Modified :
     #include <Ethernet.h>
     #include <aREST.h>
     #include <avr/wdt.h>  
-    #include <EthernetUdp.h>  
+    #include <EthernetUdp.h> 
+    #include <ArduinoJson.h> 
     #include <RTClib.h>
     #include <SPI.h>
 
@@ -36,96 +38,116 @@ Modified :
 
 void setup() {
 
-// We seem to be unhappy if the switch isn't up when ethernet tries to come up.
-// Since they may share a power supply, we wait for the switch to be up and running.
-
-  #ifdef DELAY_FOR_SWITCH
-    delay(10000);
-  #endif
-                    
-// Confirm hardware initialization if debugging 
-  #ifdef DEBUG
-    Serial.begin(115200);
-      while (!Serial) {
-        ; // wait for serial port to connect.
-      }
-  #endif
-
-// Begin serial to SMC
-  Serial1.begin(19200);
-
-// Reset SMC when Arduino starts up
-  resetSMC();
+  // We seem to be unhappy if the switch isn't up when ethernet tries to come up.
+  // Since they may share a power supply, we wait for the switch to be up and running.
   
-// Set up pins
-  #ifdef USEBUTTON
-    pinMode(buttonPin, INPUT);
-  #endif
+    #ifdef DELAY_FOR_SWITCH
+      delay(10000);
+    #endif
+                      
+  // Confirm hardware initialization if debugging 
+    #ifdef DEBUG
+      Serial.begin(115200);
+        while (!Serial) {
+          ; // wait for serial port to connect.
+        }
+    #endif
+  
+  // Begin serial to SMC
+    Serial1.begin(19200);
+  
+  // Reset SMC when Arduino starts up
+    resetSMC();
     
-// Ethernet Setup
-  // start the Ethernet connection and the server:
-    Ethernet.begin(mac, ip);
-      eth.setTimeout(5000);
-
-  // Check for Ethernet hardware present
-    if (Ethernet.hardwareStatus() == EthernetNoHardware || Ethernet.linkStatus() == LinkOFF) {
+  // Set up pins
+    #ifdef USEBUTTON
+      pinMode(buttonPin, INPUT);
+    #endif
+      
+  // Ethernet Setup
+    // start the Ethernet connection and the server:
+      Ethernet.begin(mac, ip);
+        eth.setTimeout(5000);
+  
+    // Check for Ethernet hardware present
+      if (Ethernet.hardwareStatus() == EthernetNoHardware || Ethernet.linkStatus() == LinkOFF) {
+        #ifdef DEBUG
+          Serial.println("Ethernet not present or disconnected");
+        #endif        
+        // don't do anything more:
+        while (1);
+      }
+  
+    // start the server
+      server.begin();
+      Udp.begin(localPort);    
       #ifdef DEBUG
-        Serial.println("Ethernet not present or disconnected");
-      #endif        
+        Serial.print("Server is at ");
+        Serial.println(Ethernet.localIP());
+      #endif
+  
+  // RTC Setup
+    if (! rtc.begin()) {
+      #ifdef DEBUG
+        Serial.println("Couldn't find RTC");
+      #endif
       // don't do anything more:
       while (1);
     }
-
-  // start the server
-    server.begin();
-    Udp.begin(localPort);    
     #ifdef DEBUG
-      Serial.print("server is at ");
-      Serial.println(Ethernet.localIP());
+      Serial.println("RTC Initialized");
     #endif
-
-// RTC Setup
-  if (! rtc.begin()) {
-    #ifdef DEBUG
-      Serial.println("Couldn't find RTC");
-    #endif
-    // don't do anything more:
-    while (1);
-  }
-  #ifdef DEBUG
-    Serial.println("RTC Initialized");
-  #endif
-  
-  setRTCTime();
-
-// aREST setup
-  // Name & ID
-    rest.set_id("OBSCON");
-    rest.set_name("Observatory_Control");
     
-  // API rest Variables
-
-    rest.variable("shutterState", &shutterState);
-    rest.variable("requestTimeUTC", &requestTime);
-    rest.variable("roofStatusTimeUTC", &roofStatusTime);
-        
-  // Declare functions to be exposed to the API
-    rest.function("roof_command", roof_command);
+    setRTCTime();
   
-// First polls
-  // Set the startup roof values
-    shutterState = getRoofInfo();
-    lastRoof = millis();
+  // aREST setup
+    // Name & ID
+      rest.set_id("OBSCON");
+      rest.set_name("Observatory_Control");
+      
+    // API rest Variables
+  
+      rest.variable("requestTimeUTC", &requestTime);
+      rest.variable("shutterState", &shutterState);
+      rest.variable("safetyScore", &safetyScore);
+      rest.variable("roofStatusTimeUTC", &roofStatusTime);    
+      rest.variable("wxTimeUTC", &wxTimeUTC);
+      rest.variable("aiTimeUTC", &aiTimeUTC);
+          
+    // Declare functions to be exposed to the API
+      rest.function("roof_command", roof_command);
     
-// Start watchdog
-  wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
-  delay(3000);          // Done so that the Arduino doesn't keep resetting infinitely in case of wrong configuration
-  wdt_enable(WDTO_8S);  // Enable the watchdog with a timeout of 8 seconds
-}
+  // First polls
+    // Set the startup roof values
+      shutterState = getRoofInfo();
+      lastRoof = millis();
+      convertDateTime(rtc.now(), roofStatusTime);
+    // Weather
+      wxJSON = readJSON(wxHost, wxPath);
+      lastWX = millis();
+      convertDateTime(rtc.now(), wxTimeUTC);
+    // AI
+      aiJSON = readJSON(AIHost, AIPath);
+      lastAI = millis();
+      convertDateTime(rtc.now(), aiTimeUTC);
+  
+    // First safety score
+      wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+      safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
+      #ifdef DEBUG
+        Serial.print("safetyScore is ");
+        Serial.println(safetyScore);
+      #endif    
+  
+  // Start watchdog
+    wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
+    delay(3000);          // Done so that the Arduino doesn't keep resetting infinitely in case of wrong configuration
+    wdt_enable(WDTO_8S);  // Enable the watchdog with a timeout of 8 seconds
+} // end setup()
 
 
 void loop() {
-
+  safetyScore = 0;
   // Get roof info
     if (millis() - lastRoof > roofInfoDelay)
       {
@@ -156,9 +178,32 @@ void loop() {
             Serial.print("Roof Status Time : ");
             Serial.println(roofStatusTime); 
         #endif 
-        lastRoof = millis();        
+        lastRoof = millis();
+        convertDateTime(rtc.now(), roofStatusTime);        
       }   // end if millis
-        
+
+  if (millis() - lastWX >= pollWXEvery)
+    {
+      wxJSON = readJSON(wxHost, wxPath);
+      lastWX = millis();
+      convertDateTime(rtc.now(), wxTimeUTC);
+      //wxTimeUTC = convertDateTime(rtc.now());
+    }
+
+  if (millis() - lastAI >= pollAIEvery)
+    {
+      aiJSON = readJSON(AIHost, AIPath);
+      lastAI = millis();
+      convertDateTime(rtc.now(), aiTimeUTC);
+      //aiTimeUTC = convertDateTime(rtc.now());
+    }
+
+  // Calculate the safety score
+
+    wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+    aiUTC = aiJSON["utc"].as<unsigned long>();
+    safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
+      
   // Pet the dog
     if (millis() - lastWDT >= resetWatchdogEvery)
       {
@@ -170,7 +215,8 @@ void loop() {
   EthernetClient client = server.available();
   if (client)
     {
-      requestTime = convertDateTime(rtc.now());
+      convertDateTime(rtc.now(), requestTime);
+      //requestTime = convertDateTime(rtc.now());
       rest.handle(client);  
     }
   
