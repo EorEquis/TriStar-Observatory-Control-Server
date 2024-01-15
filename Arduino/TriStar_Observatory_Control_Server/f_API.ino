@@ -65,4 +65,12 @@
             return 0;
           }
       }
-          
+
+  // Get the AI clssification score
+    int getClassificationScore(const char* classification) {
+      for (int i = 0; i < sizeof(classifications) / sizeof(classifications[0]); i++) {
+        if (strcmp(classifications[i], classification) == 0) {
+          return i;
+        }
+      }
+    }

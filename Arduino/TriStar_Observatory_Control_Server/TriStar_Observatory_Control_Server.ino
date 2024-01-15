@@ -123,18 +123,17 @@ void setup() {
   // Weather
     wxJSON = readJSON(wxHost, wxPath);
     lastWX = millis();
+  // AI
+    aiJSON = readJSON(AIHost, AIPath);
+    lastAI = millis();
+
   // First safety score
     wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
-    safetyScore = checkJSONage(wxUTC);
-    safetyScore = safetyScore + wxJSON["CloudCondition"].as<unsigned long>() + wxJSON["WindCondition"].as<unsigned long>();
+    safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
     #ifdef DEBUG
-      Serial.print("wxUTC is ");
-      Serial.println(wxUTC);
-      Serial.print("safetyScore after age check is ");
+      Serial.print("safetyScore is ");
       Serial.println(safetyScore);
-      Serial.print("safetyScore after adding up ");
-      Serial.println(safetyScore);
-    #endif
+    #endif    
 // Start watchdog
   wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
   delay(3000);          // Done so that the Arduino doesn't keep resetting infinitely in case of wrong configuration
@@ -143,7 +142,7 @@ void setup() {
 
 
 void loop() {
-
+  safetyScore = 0;
   // Get roof info
     if (millis() - lastRoof > roofInfoDelay)
       {
@@ -181,11 +180,21 @@ void loop() {
     {
       wxJSON = readJSON(wxHost, wxPath);
       lastWX = millis();
-      wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
-      safetyScore = checkJSONage(wxUTC);
-      safetyScore = safetyScore + wxJSON["CloudCondition"].as<unsigned long>() + wxJSON["WindCondition"].as<unsigned long>();            
+          
     }
-            
+
+  if (millis() - lastAI >= pollAIEvery)
+    {
+      aiJSON = readJSON(AIHost, AIPath);
+      lastAI = millis();
+    }
+
+  // Calculate the safety score
+
+    wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+    aiUTC = aiJSON["utc"].as<unsigned long>();
+    safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
+      
   // Pet the dog
     if (millis() - lastWDT >= resetWatchdogEvery)
       {
