@@ -3,8 +3,11 @@
   // Timing variables
     unsigned long lastWDT = millis();
     unsigned long lastRoof = millis();
+    unsigned long lastWX = millis();
     float elapsedMillisWDT = 0;
-  
+    float elapsedMillisWX = 0;
+    unsigned long wxUTC;
+    
   // Initialize RTC
     RTC_DS3231 rtc;
   
@@ -27,7 +30,17 @@
     int roof_command(String command);           // Valid values are "open", "close", and "abort".  open and close return 0 (success) or 1 (failure)
     String requestTime;                         // Strings to hold roof status and clinet request time, in case driver wants to compare for safety
     String roofStatusTime;
+    int safetyScore = 99;                       // A score that will be calculated from assigned values of various safety sources.
+                                                // E.G. Weather might be 0, 1, 2, 3 for Clear, Partly Cloudy, Cloudy, Rain
+                                                // This allows scores from multiple sources (Weather, AI, UPS, etc) to be added up, and a safety monitor to 
+                                                // have a "Max Score" variable above which conditions are unsafe.
+    const char wxHost[] = "192.168.0.20";
+    const char wxPath[] = "/weatherdata/wxdata.txt";
+
     
+
+// JSON Documents to hold responses from sources
+  DynamicJsonDocument wxJSON(512);    
 
   //  Setup for roof button
     #ifdef USEBUTTON

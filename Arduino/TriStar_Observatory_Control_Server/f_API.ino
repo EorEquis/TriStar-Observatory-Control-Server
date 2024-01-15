@@ -42,3 +42,27 @@
         toPad = toPad.substring(toPad.length() - 2);
         return toPad;
       }
+
+  // Check json age, return 0 if acceptable, 99 if too old, for safety score
+    int checkJSONage(unsigned long unixTimeToCheck)
+      {
+        DateTime now = rtc.now();
+        unsigned long reqTime = now.unixtime();
+        Serial.print("unixTimeToCheck: ");
+        Serial.println(unixTimeToCheck);
+        Serial.print("reqTime: ");
+        Serial.println(reqTime);
+        Serial.print("MAX_JSON_AGE: ");
+        Serial.println(MAX_JSON_AGE);
+        Serial.print("reqTime - unixTimeToCheck: ");
+        Serial.println(reqTime - unixTimeToCheck);        
+        if(reqTime - unixTimeToCheck > MAX_JSON_AGE)
+          {
+            return 99;
+          }
+        else
+          {
+            return 0;
+          }
+      }
+          

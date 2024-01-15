@@ -14,6 +14,7 @@ Modified :
           2023-12-20 Eor : Cleanup unused variables, merge/rename some ino files for more consistent naming, add/clean up some comments
           2024-01-10 Eor : Add timestamp, formatting is balls, will fix it some day (We all know I probably won't)
           2024-01-12 Eor : Stripping out a bunch of stuff for a cleaner "roof control box"
+          2024-01-14 Eor : Begin multi-source safety implementation
 */
 
 // Includes
@@ -21,7 +22,8 @@ Modified :
     #include <Ethernet.h>
     #include <aREST.h>
     #include <avr/wdt.h>  
-    #include <EthernetUdp.h>  
+    #include <EthernetUdp.h> 
+    #include <ArduinoJson.h> 
     #include <RTClib.h>
     #include <SPI.h>
 
@@ -108,6 +110,8 @@ void setup() {
     rest.variable("shutterState", &shutterState);
     rest.variable("requestTimeUTC", &requestTime);
     rest.variable("roofStatusTimeUTC", &roofStatusTime);
+    rest.variable("safetyScore", &safetyScore);
+    
         
   // Declare functions to be exposed to the API
     rest.function("roof_command", roof_command);
@@ -116,7 +120,21 @@ void setup() {
   // Set the startup roof values
     shutterState = getRoofInfo();
     lastRoof = millis();
-    
+  // Weather
+    wxJSON = readJSON(wxHost, wxPath);
+    lastWX = millis();
+  // First safety score
+    wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+    safetyScore = checkJSONage(wxUTC);
+    safetyScore = safetyScore + wxJSON["CloudCondition"].as<unsigned long>() + wxJSON["WindCondition"].as<unsigned long>();
+    #ifdef DEBUG
+      Serial.print("wxUTC is ");
+      Serial.println(wxUTC);
+      Serial.print("safetyScore after age check is ");
+      Serial.println(safetyScore);
+      Serial.print("safetyScore after adding up ");
+      Serial.println(safetyScore);
+    #endif
 // Start watchdog
   wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
   delay(3000);          // Done so that the Arduino doesn't keep resetting infinitely in case of wrong configuration
@@ -158,7 +176,16 @@ void loop() {
         #endif 
         lastRoof = millis();        
       }   // end if millis
-        
+
+  if (millis() - lastWX >= pollWXEvery)
+    {
+      wxJSON = readJSON(wxHost, wxPath);
+      lastWX = millis();
+      wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+      safetyScore = checkJSONage(wxUTC);
+      safetyScore = safetyScore + wxJSON["CloudCondition"].as<unsigned long>() + wxJSON["WindCondition"].as<unsigned long>();            
+    }
+            
   // Pet the dog
     if (millis() - lastWDT >= resetWatchdogEvery)
       {
