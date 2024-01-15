@@ -107,10 +107,14 @@ void setup() {
     
   // API rest Variables
 
-    rest.variable("shutterState", &shutterState);
     rest.variable("requestTimeUTC", &requestTime);
-    rest.variable("roofStatusTimeUTC", &roofStatusTime);
+    rest.variable("shutterState", &shutterState);
     rest.variable("safetyScore", &safetyScore);
+    rest.variable("roofStatusTimeUTC", &roofStatusTime);    
+    rest.variable("wxTimeUTC", &wxTimeUTC);
+    rest.variable("aiTimeUTC", &aiTimeUTC);
+
+    
     
         
   // Declare functions to be exposed to the API
@@ -120,12 +124,17 @@ void setup() {
   // Set the startup roof values
     shutterState = getRoofInfo();
     lastRoof = millis();
+    convertDateTime(rtc.now(), roofStatusTime);
   // Weather
     wxJSON = readJSON(wxHost, wxPath);
     lastWX = millis();
+    convertDateTime(rtc.now(), wxTimeUTC);
+//    wxTimeUTC = convertDateTime(rtc.now());
   // AI
     aiJSON = readJSON(AIHost, AIPath);
     lastAI = millis();
+    convertDateTime(rtc.now(), aiTimeUTC);
+//    aiTimeUTC = convertDateTime(rtc.now());
 
   // First safety score
     wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
@@ -173,20 +182,24 @@ void loop() {
             Serial.print("Roof Status Time : ");
             Serial.println(roofStatusTime); 
         #endif 
-        lastRoof = millis();        
+        lastRoof = millis();
+        convertDateTime(rtc.now(), roofStatusTime);        
       }   // end if millis
 
   if (millis() - lastWX >= pollWXEvery)
     {
       wxJSON = readJSON(wxHost, wxPath);
       lastWX = millis();
-          
+      convertDateTime(rtc.now(), wxTimeUTC);
+      //wxTimeUTC = convertDateTime(rtc.now());
     }
 
   if (millis() - lastAI >= pollAIEvery)
     {
       aiJSON = readJSON(AIHost, AIPath);
       lastAI = millis();
+      convertDateTime(rtc.now(), aiTimeUTC);
+      //aiTimeUTC = convertDateTime(rtc.now());
     }
 
   // Calculate the safety score
@@ -206,7 +219,8 @@ void loop() {
   EthernetClient client = server.available();
   if (client)
     {
-      requestTime = convertDateTime(rtc.now());
+      convertDateTime(rtc.now(), requestTime);
+      //requestTime = convertDateTime(rtc.now());
       rest.handle(client);  
     }
   

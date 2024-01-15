@@ -28,20 +28,34 @@
           }
       }
 
-  // Convert DateTime to String
-    String convertDateTime(DateTime datetime)
-      {
-        String str = String(datetime.year(), DEC) + "-" + padLeadingZero(String(datetime.month(), DEC)) + "-" + padLeadingZero(String(datetime.day(), DEC)) + "T" + padLeadingZero(String(datetime.hour(), DEC)) + ":" + padLeadingZero(String(datetime.minute(), DEC)) + ":" + padLeadingZero(String(datetime.second(), DEC));
-        return str;
-      }
+    // Convert DateTime to a char array (buffer)
+      void convertDateTime(DateTime datetime, char* buffer) {
+        snprintf(buffer, 20, "%04d-%02d-%02dT%02d:%02d:%02d",
+               datetime.year(), datetime.month(), datetime.day(),
+               datetime.hour(), datetime.minute(), datetime.second());
+        }
 
-  // Pad dates and times with leading 0s
-    String padLeadingZero(String toPad)
-      {
-        toPad = "0" + toPad;
-        toPad = toPad.substring(toPad.length() - 2);
-        return toPad;
-      }
+    
+    // Pad dates and times with leading 0s
+      void padLeadingZero(int number, char* buffer) {
+        snprintf(buffer, 3, "%02d", number);
+    }
+
+//
+//  // Convert DateTime to String
+//    String convertDateTime(DateTime datetime)
+//      {
+//        String str = String(datetime.year(), DEC) + "-" + padLeadingZero(String(datetime.month(), DEC)) + "-" + padLeadingZero(String(datetime.day(), DEC)) + "T" + padLeadingZero(String(datetime.hour(), DEC)) + ":" + padLeadingZero(String(datetime.minute(), DEC)) + ":" + padLeadingZero(String(datetime.second(), DEC));
+//        return str;
+//      }
+//
+//  // Pad dates and times with leading 0s
+//    String padLeadingZero(String toPad)
+//      {
+//        toPad = "0" + toPad;
+//        toPad = toPad.substring(toPad.length() - 2);
+//        return toPad;
+//      }
 
   // Check json age, return 0 if acceptable, 99 if too old, for safety score
     int checkJSONage(unsigned long unixTimeToCheck)

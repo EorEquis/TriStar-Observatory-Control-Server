@@ -31,12 +31,20 @@
  
     int shutterState = 1;                       // ASCOM shutterstate.  0=shutterOpen, 1=shutterClosed, 2=shutterOpening, 3=shutterClosing, 4=shutterError
     int roof_command(String command);           // Valid values are "open", "close", and "abort".  open and close return 0 (success) or 1 (failure)
-    String requestTime;                         // Strings to hold roof status and clinet request time, in case driver wants to compare for safety
-    String roofStatusTime;
+    char requestTime[20];
+    char roofStatusTime[20];
+    char wxTimeUTC[20];
+    char aiTimeUTC[20];
+//    String requestTime;                         // Strings to hold roof status and clinet request time, in case driver wants to compare for safety
+//    String roofStatusTime;
+//    String wxTimeUTC;
+//    String aiTimeUTC;
     int safetyScore = 99;                       // A score that will be calculated from assigned values of various safety sources.
                                                 // E.G. Weather might be 0, 1, 2, 3 for Clear, Partly Cloudy, Cloudy, Rain
                                                 // This allows scores from multiple sources (Weather, AI, UPS, etc) to be added up, and a safety monitor to 
                                                 // have a "Max Score" variable above which conditions are unsafe.
+
+    
     const char wxHost[] = "192.168.0.20";
     const char wxPath[] = "/weatherdata/wxdata.txt";
     const char AIHost[] = "allskyai.com";
