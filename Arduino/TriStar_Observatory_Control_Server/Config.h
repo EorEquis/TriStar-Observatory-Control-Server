@@ -19,6 +19,7 @@ VARIABLE                             VALUE           COMMENT                    
 
 
 // Uncomment these lines to enable features
-//#define DEBUG                                   // Debug info to serial monitor
+#define DEBUG                                   // Debug info to serial monitor
+#define DEBUGJSON                               // Debug info for just json to serial monitor
 //#define DELAY_FOR_SWITCH                      // Delay 10s at start of sketch to wait for network switch to come up
 //#define USEBUTTON                             // Uncomment to allow use of manual roof open/close button

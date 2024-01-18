@@ -20,6 +20,7 @@ Modified :
 // Includes
   // Libraries
     #include <Ethernet.h>
+    #include <ArduinoHttpClient.h>
     #include <aREST.h>
     #include <avr/wdt.h>  
     #include <EthernetUdp.h> 
@@ -137,6 +138,8 @@ void setup() {
       #ifdef DEBUG
         Serial.print("safetyScore is ");
         Serial.println(safetyScore);
+        Serial.print("wxUTC is ");
+        Serial.println(wxUTC);        
       #endif    
   
   // Start watchdog

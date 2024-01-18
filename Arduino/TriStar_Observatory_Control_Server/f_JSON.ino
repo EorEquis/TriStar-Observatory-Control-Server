@@ -1,62 +1,66 @@
 DynamicJsonDocument readJSON(const char * Host, const char * Path) {
-  // Connect to HTTP server
-  eth.setTimeout(10000);
-  if (!eth.connect(Host, 80)) {
-    Serial.println(F("Connection failed"));
-    return;
+  static DynamicJsonDocument doc(512); // Adjust the capacity as needed
+  static size_t bytesRead = 0;
+  
+  char url[strlen(Host) + strlen(Path) + 8];
+  strcpy(url, "http://");
+  strcat(url, Host);
+  strcat(url, Path);
+
+  #ifdef DEBUG
+    Serial.print("Constructed URL: ");
+    Serial.println(url);
+  #endif
+  
+  switch (httpState) {
+    case HttpState::Idle:
+      // Initiate the asynchronous HTTP request
+      int httpCode = httpClient.get(url);
+      httpState = HttpState::SendingRequest;
+      #ifdef DEBUG
+        Serial.print("httpCode is ");
+        Serial.println(httpCode);
+        Serial.println("httpState is presumably SendingRequest");
+      #endif    
+      break;
+
+    case HttpState::SendingRequest:
+      // Check if the request has been sent
+      if (httpClient.available()) {
+        httpState = HttpState::ReceivingResponse;
+      }
+      break;
+
+    case HttpState::ReceivingResponse:
+      // Read the HTTP response data if available
+      while (httpClient.available()) {
+        char c = httpClient.read();
+        if (bytesRead < sizeof(responseBuffer) - 1) {
+          responseBuffer[bytesRead++] = c;
+        }
+      }
+
+      // Check if the response is complete
+      if (httpClient.responseStatusCode() == 0) {
+        // Incomplete response, continue receiving
+      } else {
+        // Complete response received, parse it
+        DeserializationError error = deserializeJson(doc, responseBuffer);
+        if (error) {
+          Serial.print(F("deserializeJson() failed: "));
+          Serial.println(error.f_str());
+        }
+        // Reset the HTTP state
+        httpState = HttpState::Done;
+        bytesRead = 0;
+      }
+      break;
+
+    case HttpState::Done:
+      // Reset the HTTP state for the next request
+      httpState = HttpState::Idle;
+      break;
   }
 
-  Serial.print(F("Connected to "));
-  Serial.println(Host);
-
-  // Send HTTP request
-  eth.print(F("GET "));
-  delay(3);         // Appears we were overflowing the send buffer.  A serial.print "fixed" it, so trying a brief delay.
-  eth.print(Path);
-  delay(3);
-  eth.println(F(" HTTP/1.0"));
-  delay(3);
-  eth.print(F("Host: "));
-  delay(3);
-  eth.println(Host);
-  delay(3);
-  eth.println(F("Connection: close"));
-  if (eth.println() == 0) {
-    Serial.println(F("Failed to send request"));
-    eth.stop();
-    return;
-  }
-
-  // Check HTTP status
-  char status[32] = {0};
-  eth.readBytesUntil('\r', status, sizeof(status));
-  if (strcmp(status, "HTTP/1.1 200 OK") != 0 && strcmp(status, "HTTP/1.0 200 OK") != 0) {
-    Serial.print(F("Unexpected response: "));
-    Serial.println(status);
-    eth.stop();
-    return;
-  }
-
-  // Skip HTTP headers
-  char endOfHeaders[] = "\r\n\r\n";
-  if (!eth.find(endOfHeaders)) {
-    Serial.println(F("Invalid response"));
-    eth.stop();
-    return;
-  }
-
-  // Allocate the JSON document
-  // Use arduinojson.org/v6/assistant to compute the capacity.
-  const size_t capacity = 512;
-  DynamicJsonDocument doc(capacity);
-
-  // Parse JSON object
-  DeserializationError error = deserializeJson(doc, eth);
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    eth.stop();
-    return;
-  }
   return doc;
 }

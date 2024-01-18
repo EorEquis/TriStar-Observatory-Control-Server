@@ -17,7 +17,10 @@
   // Initialize the Ethernet server and client
     EthernetServer server(80);
     EthernetClient eth;
-  
+    HttpClient httpClient(eth, ip, 80);
+    enum class HttpState { Idle, SendingRequest, ReceivingResponse, Done };
+    HttpState httpState = HttpState::Idle;
+    char responseBuffer[1024]; 
   
   // Ethernet UDP Variabls
     unsigned int localPort = 8888;              // local port to listen for UDP packets
