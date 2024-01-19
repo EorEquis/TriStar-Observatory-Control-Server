@@ -10,6 +10,8 @@
     float elapsedMillisAI = 0;
     unsigned long wxUTC;
     unsigned long aiUTC;
+    bool wxCalcScore = false;
+    bool aiCalcScore = false;
     
   // Initialize RTC
     RTC_DS3231 rtc;
@@ -22,6 +24,7 @@
 struct HTTPRequest {
   EthernetClient client;
   bool requestInProgress;
+  bool responseInProgress;
   unsigned long startTime;
   const char* host;
   const char* path;

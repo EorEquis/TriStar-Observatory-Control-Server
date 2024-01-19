@@ -118,28 +118,36 @@ void setup() {
       rest.function("roof_command", roof_command);
     
   // First polls
-    // Set the startup roof values
+    // Shutter
       shutterState = getRoofInfo();
       lastRoof = millis();
       convertDateTime(rtc.now(), roofStatusTime);
+    
     // Weather
-      wxJSON = readJSON(wxHost, wxPath);
+      startWxJSONRequest(wxHost, wxPath);
       lastWX = millis();
+      while (wxJSON.isNull()) {
+        delay(500);
+        wxJSON = processWxJSONResponse();
+      }
       convertDateTime(rtc.now(), wxTimeUTC);
+      
     // AI
-      aiJSON = readJSON(AIHost, AIPath);
+      startAIJSONRequest(AIHost, AIPath);
       lastAI = millis();
+      while (aiJSON.isNull()) {
+        delay(500);
+        aiJSON = processAIJSONResponse();
+      }
       convertDateTime(rtc.now(), aiTimeUTC);
   
     // First safety score
       wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+      aiUTC = aiJSON["utc"].as<unsigned long>();
+      
       safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
-      #ifdef DEBUG
-        Serial.print("safetyScore is ");
-        Serial.println(safetyScore);
-      #endif    
-  
-  // Start watchdog
+ 
+//   Start watchdog
     wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
     delay(3000);          // Done so that the Arduino doesn't keep resetting infinitely in case of wrong configuration
     wdt_enable(WDTO_8S);  // Enable the watchdog with a timeout of 8 seconds
@@ -164,68 +172,76 @@ void loop() {
                 }
             }
         #endif
-        #ifdef DEBUG
-            Serial.print("getRoofInfo() called, shutterState is ");
-            Serial.println(shutterState);
-            Serial.print("Roof limitStatus : ");
-            Serial.println(limitStatus);
-            Serial.print("Roof errorStatus : ");
-            Serial.println(errorStatus);
-            Serial.print("Roof currentRoofSpeed : ");
-            Serial.println(currentRoofSpeed);
-            Serial.print("Roof targetRoofSpeed : ");
-            Serial.println(targetRoofSpeed);            
-            Serial.print("Roof Status Time : ");
-            Serial.println(roofStatusTime); 
-        #endif 
+ 
         lastRoof = millis();
         convertDateTime(rtc.now(), roofStatusTime);        
       }   // end if millis
 
 
-  // Start JSON request if needed
-  if (!wxRequest.requestInProgress && millis() - lastWX >= pollWXEvery) {
-    startWxJSONRequest(wxHost, wxPath);
-    lastWX = millis();
-  }
+  // Start JSON requests if needed
+    if (!wxRequest.requestInProgress && millis() - lastWX >= pollWXEvery) {
+      #ifdef DEBUG
+        Serial.println("Starting wx request");
+      #endif
+      startWxJSONRequest(wxHost, wxPath);
+      lastWX = millis();
+    }
 
-  if (!aiRequest.requestInProgress && millis() - lastAI >= pollAIEvery) {
-      startAIJSONRequest(AIHost, AIPath);
-      lastAI = millis();
-  }
+    if (!aiRequest.requestInProgress && millis() - lastAI >= pollAIEvery) {
+        #ifdef DEBUG
+          Serial.println("Starting ai request");
+        #endif        
+        startAIJSONRequest(AIHost, AIPath);
+        lastAI = millis();
+    }
 
-  // Process JSON response
-  if (wxRequest.requestInProgress) {
-    wxJSON = processWxJSONResponse();
-  }
+  // Process JSON responses
+    if (wxRequest.requestInProgress) {
+      wxJSON = processWxJSONResponse();
+        if (!wxJSON.isNull()) {
+          wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+          convertDateTime(rtc.now(), wxTimeUTC);
+          wxCalcScore = true;
+        }    
+    }
 
-  if (aiRequest.requestInProgress) {
-      aiJSON = processAIJSONResponse();
-  }
-  
-//
-//  if (millis() - lastWX >= pollWXEvery)
-//    {
-//      wxJSON = readJSON(wxHost, wxPath);
-//      lastWX = millis();
-//      convertDateTime(rtc.now(), wxTimeUTC);
-//      //wxTimeUTC = convertDateTime(rtc.now());
-//    }
-//
-//  if (millis() - lastAI >= pollAIEvery)
-//    {
-//      aiJSON = readJSON(AIHost, AIPath);
-//      lastAI = millis();
-//      convertDateTime(rtc.now(), aiTimeUTC);
-//      //aiTimeUTC = convertDateTime(rtc.now());
-//    }
+    if (aiRequest.requestInProgress) {
+        aiJSON = processAIJSONResponse();
+        if (!aiJSON.isNull()) {
+          aiUTC = aiJSON["utc"].as<unsigned long>();
+          convertDateTime(rtc.now(), aiTimeUTC);
+          aiCalcScore = true;
+        }          
+    }
 
-  // Calculate the safety score
+  // Calculate the safety score if needed
 
-    wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
-    aiUTC = aiJSON["utc"].as<unsigned long>();
-    safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
-      
+    if (wxCalcScore || aiCalcScore) {
+      wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+      aiUTC = aiJSON["utc"].as<unsigned long>();
+      safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
+      #ifdef DEBUG
+        Serial.print("checkJSONage(wxUTC): ");
+        Serial.println(checkJSONage(wxUTC));
+        Serial.print("checkJSONage(aiUTC): ");
+        Serial.println(checkJSONage(aiUTC));
+        Serial.print("CloudCondition: ");
+        Serial.println(wxJSON["CloudCondition"].as<unsigned long>() - 1);
+        Serial.print("WindCondition: ");
+        Serial.println(wxJSON["WindCondition"].as<unsigned long>() - 1);                
+        Serial.print("classification: ");
+        Serial.println(getClassificationScore(aiJSON["classification"]));
+      #endif
+      if (wxCalcScore) {
+        wxCalcScore = false;
+        wxJSON.clear();   
+      }
+      if (aiCalcScore) {
+        aiCalcScore = false;
+        aiJSON.clear();   
+      }
+    }
+    
   // Pet the dog
     if (millis() - lastWDT >= resetWatchdogEvery)
       {
@@ -238,7 +254,6 @@ void loop() {
   if (client)
     {
       convertDateTime(rtc.now(), requestTime);
-      //requestTime = convertDateTime(rtc.now());
       rest.handle(client);  
     }
   

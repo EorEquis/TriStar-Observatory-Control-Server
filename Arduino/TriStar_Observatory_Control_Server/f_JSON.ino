@@ -12,7 +12,7 @@ void startWxJSONRequest(const char* host, const char* path) {
   if (wxRequest.client.connect(host, 80)) {
     wxRequest.client.print(F("GET "));
     wxRequest.client.print(path);
-    wxRequest.client.println(F(" HTTP/1.1"));
+    wxRequest.client.println(F(" HTTP/1.0"));
     wxRequest.client.print(F("Host: "));
     wxRequest.client.println(host);
     wxRequest.client.println(F("Connection: close"));
@@ -28,6 +28,7 @@ DynamicJsonDocument processWxJSONResponse() {
 
   if (wxRequest.requestInProgress && wxRequest.client.available()) {
     // Read and ignore HTTP headers
+    wxRequest.responseInProgress = true;
     while (wxRequest.client.available()) {
       String line = wxRequest.client.readStringUntil('\n');
       line.trim();
@@ -35,7 +36,6 @@ DynamicJsonDocument processWxJSONResponse() {
         break;
       }
     }
-
     // Parse the JSON object
     DeserializationError error = deserializeJson(doc, wxRequest.client);
     if (error) {
@@ -63,7 +63,7 @@ void startAIJSONRequest(const char* host, const char* path) {
   if (aiRequest.client.connect(host, 80)) {
     aiRequest.client.print(F("GET "));
     aiRequest.client.print(path);
-    aiRequest.client.println(F(" HTTP/1.1"));
+    aiRequest.client.println(F(" HTTP/1.0"));
     aiRequest.client.print(F("Host: "));
     aiRequest.client.println(host);
     aiRequest.client.println(F("Connection: close"));
