@@ -17,6 +17,7 @@
   // Initialize the Ethernet server and client
     EthernetServer server(80);
     EthernetClient eth;
+    HttpClient http(eth);
   
   
   // Ethernet UDP Variabls
