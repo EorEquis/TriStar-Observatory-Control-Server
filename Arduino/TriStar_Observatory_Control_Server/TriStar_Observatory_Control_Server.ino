@@ -20,7 +20,6 @@ Modified :
 // Includes
   // Libraries
     #include <Ethernet.h>
-    #include <ArduinoHttpClient.h>
     #include <aREST.h>
     #include <avr/wdt.h>  
     #include <EthernetUdp.h> 
@@ -138,8 +137,6 @@ void setup() {
       #ifdef DEBUG
         Serial.print("safetyScore is ");
         Serial.println(safetyScore);
-        Serial.print("wxUTC is ");
-        Serial.println(wxUTC);        
       #endif    
   
   // Start watchdog
@@ -185,21 +182,43 @@ void loop() {
         convertDateTime(rtc.now(), roofStatusTime);        
       }   // end if millis
 
-  if (millis() - lastWX >= pollWXEvery)
-    {
-      wxJSON = readJSON(wxHost, wxPath);
-      lastWX = millis();
-      convertDateTime(rtc.now(), wxTimeUTC);
-      //wxTimeUTC = convertDateTime(rtc.now());
-    }
 
-  if (millis() - lastAI >= pollAIEvery)
-    {
-      aiJSON = readJSON(AIHost, AIPath);
+  // Start JSON request if needed
+  if (!wxRequest.requestInProgress && millis() - lastWX >= pollWXEvery) {
+    startWxJSONRequest(wxHost, wxPath);
+    lastWX = millis();
+  }
+
+  if (!aiRequest.requestInProgress && millis() - lastAI >= pollAIEvery) {
+      startAIJSONRequest(AIHost, AIPath);
       lastAI = millis();
-      convertDateTime(rtc.now(), aiTimeUTC);
-      //aiTimeUTC = convertDateTime(rtc.now());
-    }
+  }
+
+  // Process JSON response
+  if (wxRequest.requestInProgress) {
+    wxJSON = processWxJSONResponse();
+  }
+
+  if (aiRequest.requestInProgress) {
+      aiJSON = processAIJSONResponse();
+  }
+  
+//
+//  if (millis() - lastWX >= pollWXEvery)
+//    {
+//      wxJSON = readJSON(wxHost, wxPath);
+//      lastWX = millis();
+//      convertDateTime(rtc.now(), wxTimeUTC);
+//      //wxTimeUTC = convertDateTime(rtc.now());
+//    }
+//
+//  if (millis() - lastAI >= pollAIEvery)
+//    {
+//      aiJSON = readJSON(AIHost, AIPath);
+//      lastAI = millis();
+//      convertDateTime(rtc.now(), aiTimeUTC);
+//      //aiTimeUTC = convertDateTime(rtc.now());
+//    }
 
   // Calculate the safety score
 

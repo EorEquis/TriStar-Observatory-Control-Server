@@ -1,66 +1,166 @@
+
+
+// Function to initiate the wx JSON request
+void startWxJSONRequest(const char* host, const char* path) {
+  wxRequest.client.stop(); // Close any previous connection
+  wxRequest.host = host;
+  wxRequest.path = path;
+  wxRequest.requestInProgress = true;
+  wxRequest.startTime = millis();
+
+  // Connect to the server and send the HTTP GET request
+  if (wxRequest.client.connect(host, 80)) {
+    wxRequest.client.print(F("GET "));
+    wxRequest.client.print(path);
+    wxRequest.client.println(F(" HTTP/1.1"));
+    wxRequest.client.print(F("Host: "));
+    wxRequest.client.println(host);
+    wxRequest.client.println(F("Connection: close"));
+    wxRequest.client.println();
+  } else {
+    wxRequest.requestInProgress = false; // Connection failed
+  }
+}
+
+// Function to process the wx JSON response
+DynamicJsonDocument processWxJSONResponse() {
+  DynamicJsonDocument doc(512); // Adjust size as needed
+
+  if (wxRequest.requestInProgress && wxRequest.client.available()) {
+    // Read and ignore HTTP headers
+    while (wxRequest.client.available()) {
+      String line = wxRequest.client.readStringUntil('\n');
+      line.trim();
+      if (line.equals("")) { // Empty line indicates end of headers
+        break;
+      }
+    }
+
+    // Parse the JSON object
+    DeserializationError error = deserializeJson(doc, wxRequest.client);
+    if (error) {
+      // TODO Handle deserialization error
+    }
+
+    wxRequest.requestInProgress = false;
+    wxRequest.client.stop();
+  } else if (millis() - wxRequest.startTime > 10000) { // 10-second timeout
+    wxRequest.requestInProgress = false;
+    wxRequest.client.stop();
+  }
+  return doc;
+}
+
+// Function to initiate the AI JSON request
+void startAIJSONRequest(const char* host, const char* path) {
+  aiRequest.client.stop(); // Close any previous connection
+  aiRequest.host = host;
+  aiRequest.path = path;
+  aiRequest.requestInProgress = true;
+  aiRequest.startTime = millis();
+
+  // Connect to the server and send the HTTP GET request
+  if (aiRequest.client.connect(host, 80)) {
+    aiRequest.client.print(F("GET "));
+    aiRequest.client.print(path);
+    aiRequest.client.println(F(" HTTP/1.1"));
+    aiRequest.client.print(F("Host: "));
+    aiRequest.client.println(host);
+    aiRequest.client.println(F("Connection: close"));
+    aiRequest.client.println();
+  } else {
+    aiRequest.requestInProgress = false; // Connection failed
+  }
+}
+
+// Function to process the AI JSON response
+DynamicJsonDocument processAIJSONResponse() {
+  DynamicJsonDocument doc(512); // Adjust size as needed
+
+  if (aiRequest.requestInProgress && aiRequest.client.available()) {
+    // Read and ignore HTTP headers
+    while (aiRequest.client.available()) {
+      String line = aiRequest.client.readStringUntil('\n');
+      line.trim();
+      if (line.equals("")) { // Empty line indicates end of headers
+        break;
+      }
+    }
+
+    // Parse the JSON object
+    DeserializationError error = deserializeJson(doc, aiRequest.client);
+    if (error) {
+      // TODO Handle deserialization error
+    }
+
+    aiRequest.requestInProgress = false;
+    aiRequest.client.stop();
+  } else if (millis() - aiRequest.startTime > 10000) { // 10-second timeout
+    aiRequest.requestInProgress = false;
+    aiRequest.client.stop();
+  }
+  return doc;
+}
+
 DynamicJsonDocument readJSON(const char * Host, const char * Path) {
-  static DynamicJsonDocument doc(512); // Adjust the capacity as needed
-  static size_t bytesRead = 0;
-  
-  char url[strlen(Host) + strlen(Path) + 8];
-  strcpy(url, "http://");
-  strcat(url, Host);
-  strcat(url, Path);
-
-  #ifdef DEBUG
-    Serial.print("Constructed URL: ");
-    Serial.println(url);
-  #endif
-  
-  switch (httpState) {
-    case HttpState::Idle:
-      // Initiate the asynchronous HTTP request
-      int httpCode = httpClient.get(url);
-      httpState = HttpState::SendingRequest;
-      #ifdef DEBUG
-        Serial.print("httpCode is ");
-        Serial.println(httpCode);
-        Serial.println("httpState is presumably SendingRequest");
-      #endif    
-      break;
-
-    case HttpState::SendingRequest:
-      // Check if the request has been sent
-      if (httpClient.available()) {
-        httpState = HttpState::ReceivingResponse;
-      }
-      break;
-
-    case HttpState::ReceivingResponse:
-      // Read the HTTP response data if available
-      while (httpClient.available()) {
-        char c = httpClient.read();
-        if (bytesRead < sizeof(responseBuffer) - 1) {
-          responseBuffer[bytesRead++] = c;
-        }
-      }
-
-      // Check if the response is complete
-      if (httpClient.responseStatusCode() == 0) {
-        // Incomplete response, continue receiving
-      } else {
-        // Complete response received, parse it
-        DeserializationError error = deserializeJson(doc, responseBuffer);
-        if (error) {
-          Serial.print(F("deserializeJson() failed: "));
-          Serial.println(error.f_str());
-        }
-        // Reset the HTTP state
-        httpState = HttpState::Done;
-        bytesRead = 0;
-      }
-      break;
-
-    case HttpState::Done:
-      // Reset the HTTP state for the next request
-      httpState = HttpState::Idle;
-      break;
+  // Connect to HTTP server
+  eth.setTimeout(10000);
+  if (!eth.connect(Host, 80)) {
+    Serial.println(F("Connection failed"));
+    return;
   }
 
+  Serial.print(F("Connected to "));
+  Serial.println(Host);
+
+  // Send HTTP request
+  eth.print(F("GET "));
+  delay(3);         // Appears we were overflowing the send buffer.  A serial.print "fixed" it, so trying a brief delay.
+  eth.print(Path);
+  delay(3);
+  eth.println(F(" HTTP/1.0"));
+  delay(3);
+  eth.print(F("Host: "));
+  delay(3);
+  eth.println(Host);
+  delay(3);
+  eth.println(F("Connection: close"));
+  if (eth.println() == 0) {
+    Serial.println(F("Failed to send request"));
+    eth.stop();
+    return;
+  }
+
+  // Check HTTP status
+  char status[32] = {0};
+  eth.readBytesUntil('\r', status, sizeof(status));
+  if (strcmp(status, "HTTP/1.1 200 OK") != 0 && strcmp(status, "HTTP/1.0 200 OK") != 0) {
+    Serial.print(F("Unexpected response: "));
+    Serial.println(status);
+    eth.stop();
+    return;
+  }
+
+  // Skip HTTP headers
+  char endOfHeaders[] = "\r\n\r\n";
+  if (!eth.find(endOfHeaders)) {
+    Serial.println(F("Invalid response"));
+    eth.stop();
+    return;
+  }
+
+  // Allocate the JSON document
+  // Use arduinojson.org/v6/assistant to compute the capacity.
+  const size_t capacity = 512;
+  DynamicJsonDocument doc(capacity);
+
+  // Parse JSON object
+  DeserializationError error = deserializeJson(doc, eth);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    eth.stop();
+    return;
+  }
   return doc;
 }

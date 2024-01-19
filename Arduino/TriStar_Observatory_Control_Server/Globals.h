@@ -17,10 +17,19 @@
   // Initialize the Ethernet server and client
     EthernetServer server(80);
     EthernetClient eth;
-    HttpClient httpClient(eth, ip, 80);
-    enum class HttpState { Idle, SendingRequest, ReceivingResponse, Done };
-    HttpState httpState = HttpState::Idle;
-    char responseBuffer[1024]; 
+
+// Structure to track an HTTP request
+struct HTTPRequest {
+  EthernetClient client;
+  bool requestInProgress;
+  unsigned long startTime;
+  const char* host;
+  const char* path;
+};
+
+// Define two HTTPRequest variables for wx and AI
+HTTPRequest wxRequest;
+HTTPRequest aiRequest;  
   
   // Ethernet UDP Variabls
     unsigned int localPort = 8888;              // local port to listen for UDP packets
@@ -122,4 +131,3 @@
     const int roofMotorSpeed = 2800;        // Variable to hold motor speed for roof operations
     int roofInfoDelay = 1000;               // Delay (in ms) between polling SMC for roof info
     int roofMotorState = 0;                 // Holds current motor state (See defines above)
-  
