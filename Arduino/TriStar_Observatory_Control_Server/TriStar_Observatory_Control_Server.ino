@@ -20,7 +20,6 @@ Modified :
 // Includes
   // Libraries
     #include <Ethernet.h>
-    #include <HttpClient.h>
     #include <aREST.h>
     #include <avr/wdt.h>  
     #include <EthernetUdp.h> 
