@@ -5,11 +5,14 @@
     unsigned long lastRoof = millis();
     unsigned long lastWX = millis();
     unsigned long lastAI = millis();
+    unsigned long lastUPS = millis();
     float elapsedMillisWDT = 0;
     float elapsedMillisWX = 0;
     float elapsedMillisAI = 0;
+    float elapsedMillisUPS = 0;
     unsigned long wxUTC;
     unsigned long aiUTC;
+    unsigned long upsUTC;
     bool calcScore = false;
     
   // Initialize RTC
@@ -29,9 +32,10 @@ struct HTTPRequest {
   const char* path;
 };
 
-// Define two HTTPRequest variables for wx and AI
+// Define HTTPRequest variables
 HTTPRequest wxRequest;
 HTTPRequest aiRequest;  
+HTTPRequest upsRequest; 
   
   // Ethernet UDP Variabls
     unsigned int localPort = 8888;              // local port to listen for UDP packets
@@ -49,10 +53,7 @@ HTTPRequest aiRequest;
     char roofStatusTime[20];
     char wxTimeUTC[20];
     char aiTimeUTC[20];
-//    String requestTime;                         // Strings to hold roof status and clinet request time, in case driver wants to compare for safety
-//    String roofStatusTime;
-//    String wxTimeUTC;
-//    String aiTimeUTC;
+    char upsTimeUTC[20];
     int safetyScore = 99;                       // A score that will be calculated from assigned values of various safety sources.
                                                 // E.G. Weather might be 0, 1, 2, 3 for Clear, Partly Cloudy, Cloudy, Rain
                                                 // This allows scores from multiple sources (Weather, AI, UPS, etc) to be added up, and a safety monitor to 
@@ -63,6 +64,9 @@ HTTPRequest aiRequest;
     const char wxPath[] = "/weatherdata/wxdata.txt";
     const char AIHost[] = "allskyai.com";
     const char AIPath[] = "/tfapi/v1/live?url=https://allsky.tristarobservatory.com/image.jpg";    
+    const char upsHost[] = "192.168.50.50";
+    const char upsPath[] = "/api/upsStatus";
+    const char upsPort[] = "4242";
 
     const char* classifications[] = {"clear", "light_clouds", "heavy_clouds", "precipitation"}; // AllSky AI classifications, so we can map score to index
 
@@ -70,6 +74,7 @@ HTTPRequest aiRequest;
 // JSON Documents to hold responses from sources
   DynamicJsonDocument wxJSON(512);
   DynamicJsonDocument aiJSON(192);     
+  DynamicJsonDocument upsJSON(192);
 
   //  Setup for roof button
     #ifdef USEBUTTON
@@ -81,8 +86,6 @@ HTTPRequest aiRequest;
     #endif
   
   // Pololu SMC config
-    // const int rxPin = 3;          // pin 3 connects to SMC TX   : Green
-    // const int txPin = 4;          // pin 4 connects to SMC RX   : Orange
     // Green - Mega 19 RX1 to SMC TX
     // Orange - Mega 18 TX1 to SMC RX
     const int resetPin = 5;       // pin 5 connects to SMC nRST : Grey

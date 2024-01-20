@@ -9,6 +9,7 @@
 int resetWatchdogEvery = 5000;                  // Number of miliseconds to reset the watchdog, since 8s is WDT max, and we poll less often
 int pollWXEvery = 10000;                        // Number of milliseconds to wait between polls of the Weather Station 
 int pollAIEvery = 10000;                        // Number of milliseconds to wait between polls of the AllSkyAI
+int pollUPSEvery = 10000;                       // Number of milliseconds to wait between polls of the UPS API
 
 /*
 VARIABLE                             VALUE           COMMENT                                                              SAFE/UNSAFE
