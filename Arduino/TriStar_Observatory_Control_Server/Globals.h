@@ -10,8 +10,7 @@
     float elapsedMillisAI = 0;
     unsigned long wxUTC;
     unsigned long aiUTC;
-    bool wxCalcScore = false;
-    bool aiCalcScore = false;
+    bool calcScore = false;
     
   // Initialize RTC
     RTC_DS3231 rtc;

@@ -41,6 +41,9 @@ DynamicJsonDocument processWxJSONResponse() {
     if (error) {
       // TODO Handle deserialization error
     }
+    else {
+      calcScore=true;
+    }
 
     wxRequest.requestInProgress = false;
     wxRequest.client.stop();
@@ -92,7 +95,9 @@ DynamicJsonDocument processAIJSONResponse() {
     if (error) {
       // TODO Handle deserialization error
     }
-
+    else {
+      calcScore=true;
+    }
     aiRequest.requestInProgress = false;
     aiRequest.client.stop();
   } else if (millis() - aiRequest.startTime > 10000) { // 10-second timeout

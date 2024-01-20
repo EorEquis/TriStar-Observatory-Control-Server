@@ -15,6 +15,7 @@ Modified :
           2024-01-10 Eor : Add timestamp, formatting is balls, will fix it some day (We all know I probably won't)
           2024-01-12 Eor : Stripping out a bunch of stuff for a cleaner "roof control box"
           2024-01-14 Eor : Begin multi-source safety implementation
+          
 */
 
 // Includes
@@ -155,7 +156,6 @@ void setup() {
 
 
 void loop() {
-  safetyScore = 0;
   // Get roof info
     if (millis() - lastRoof > roofInfoDelay)
       {
@@ -198,29 +198,25 @@ void loop() {
   // Process JSON responses
     if (wxRequest.requestInProgress) {
       wxJSON = processWxJSONResponse();
-        if (!wxJSON.isNull()) {
-          wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
-          convertDateTime(rtc.now(), wxTimeUTC);
-          wxCalcScore = true;
-        }    
+      wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+      convertDateTime(rtc.now(), wxTimeUTC);
     }
 
     if (aiRequest.requestInProgress) {
         aiJSON = processAIJSONResponse();
-        if (!aiJSON.isNull()) {
-          aiUTC = aiJSON["utc"].as<unsigned long>();
-          convertDateTime(rtc.now(), aiTimeUTC);
-          aiCalcScore = true;
-        }          
+        aiUTC = aiJSON["utc"].as<unsigned long>();
+        convertDateTime(rtc.now(), aiTimeUTC);
     }
 
   // Calculate the safety score if needed
 
-    if (wxCalcScore || aiCalcScore) {
+    if (calcScore) {
       wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
       aiUTC = aiJSON["utc"].as<unsigned long>();
       safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
       #ifdef DEBUG
+        Serial.print("safetyScore: ");
+        Serial.println(safetyScore);
         Serial.print("checkJSONage(wxUTC): ");
         Serial.println(checkJSONage(wxUTC));
         Serial.print("checkJSONage(aiUTC): ");
@@ -232,14 +228,7 @@ void loop() {
         Serial.print("classification: ");
         Serial.println(getClassificationScore(aiJSON["classification"]));
       #endif
-      if (wxCalcScore) {
-        wxCalcScore = false;
-        wxJSON.clear();   
-      }
-      if (aiCalcScore) {
-        aiCalcScore = false;
-        aiJSON.clear();   
-      }
+      calcScore = false;
     }
     
   // Pet the dog

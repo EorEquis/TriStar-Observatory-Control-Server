@@ -62,16 +62,16 @@
       {
         DateTime now = rtc.now();
         unsigned long reqTime = now.unixtime();
-        #ifdef DEBUG
-          Serial.print("unixTimeToCheck: ");
-          Serial.println(unixTimeToCheck);
-          Serial.print("reqTime: ");
-          Serial.println(reqTime);
-          Serial.print("MAX_JSON_AGE: ");
-          Serial.println(MAX_JSON_AGE);
-          Serial.print("reqTime - unixTimeToCheck: ");
-          Serial.println(reqTime - unixTimeToCheck);
-        #endif
+//        #ifdef DEBUG
+//          Serial.print("unixTimeToCheck: ");
+//          Serial.println(unixTimeToCheck);
+//          Serial.print("reqTime: ");
+//          Serial.println(reqTime);
+//          Serial.print("MAX_JSON_AGE: ");
+//          Serial.println(MAX_JSON_AGE);
+//          Serial.print("reqTime - unixTimeToCheck: ");
+//          Serial.println(reqTime - unixTimeToCheck);
+//        #endif
         if(reqTime - unixTimeToCheck > MAX_JSON_AGE)
           {
             return 99;
