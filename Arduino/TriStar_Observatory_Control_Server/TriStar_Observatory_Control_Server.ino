@@ -121,17 +121,11 @@ void setup() {
     
   // First polls
     // Shutter
-      #ifdef DEBUG
-        Serial.println("First shutter poll");
-      #endif
       shutterState = getRoofInfo();
       lastRoof = millis();
       convertDateTime(rtc.now(), roofStatusTime);
     
     // Weather
-      #ifdef DEBUG
-        Serial.println("First weather poll");
-      #endif
       startWxJSONRequest(wxHost, wxPath);
       lastWX = millis();
       while (wxJSON.isNull()) {
@@ -141,9 +135,6 @@ void setup() {
       convertDateTime(rtc.now(), wxTimeUTC);
       
     // AI
-      #ifdef DEBUG
-        Serial.println("First AI poll");
-      #endif
       startAIJSONRequest(AIHost, AIPath);
       lastAI = millis();
       while (aiJSON.isNull()) {
@@ -153,9 +144,6 @@ void setup() {
       convertDateTime(rtc.now(), aiTimeUTC);
 
     // UPS
-      #ifdef DEBUG
-        Serial.println("First UPS poll");
-      #endif
       startUpsJSONRequest(upsHost, upsPath, upsPort);
       lastUPS = millis();
       while (upsJSON.isNull()) {
@@ -165,19 +153,19 @@ void setup() {
       convertDateTime(rtc.now(), upsTimeUTC);
         
     // First safety score
-      #ifdef DEBUG
-        Serial.println("First safety score calc");
-      #endif      
       wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
       aiUTC = aiJSON["utc"].as<unsigned long>();
       upsUTC = upsJSON["currentTimeUTC"].as<unsigned long>();
       
-      safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + checkJSONage(upsUTC)
-                  + (wxJSON["CloudCondition"].as<unsigned long>() - 1)
-                  + (wxJSON["WindCondition"].as<unsigned long>() - 1)
-                  + (upsJSON["powerFlag"].as<unsigned long>() - 1)
-                  + (upsJSON["commFlag"].as<unsigned long>() - 1)
-                  + getClassificationScore(aiJSON["classification"]);
+      safetyScore = 
+        checkJSONage(wxUTC) 
+        + checkJSONage(aiUTC) 
+        + checkJSONage(upsUTC)
+        + (wxJSON["CloudCondition"].as<unsigned long>() - 1)
+        + (wxJSON["WindCondition"].as<unsigned long>() - 1)
+        + (upsJSON["powerFlag"].as<unsigned long>())
+        + (upsJSON["commFlag"].as<unsigned long>())
+        + getClassificationScore(aiJSON["classification"]);
  
 //   Start watchdog
     wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
@@ -211,25 +199,16 @@ void loop() {
 
   // Start JSON requests if needed
     if (!wxRequest.requestInProgress && millis() - lastWX >= pollWXEvery) {
-      #ifdef DEBUG
-        Serial.println("Starting wx request");
-      #endif
       startWxJSONRequest(wxHost, wxPath);
       lastWX = millis();
     }
 
     if (!aiRequest.requestInProgress && millis() - lastAI >= pollAIEvery) {
-        #ifdef DEBUG
-          Serial.println("Starting ai request");
-        #endif        
         startAIJSONRequest(AIHost, AIPath);
         lastAI = millis();
     }
 
     if (!upsRequest.requestInProgress && millis() - lastUPS >= pollUPSEvery) {
-        #ifdef DEBUG
-          Serial.println("Starting UPS request");
-        #endif        
         startUpsJSONRequest(upsHost, upsPath, upsPort);
         lastUPS = millis();
     }
@@ -237,19 +216,19 @@ void loop() {
   // Process JSON responses
     if (wxRequest.requestInProgress) {
       wxJSON = processWxJSONResponse();
-      wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
+      //wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
       convertDateTime(rtc.now(), wxTimeUTC);
     }
 
     if (aiRequest.requestInProgress) {
       aiJSON = processAIJSONResponse();
-      aiUTC = aiJSON["utc"].as<unsigned long>();
+      //aiUTC = aiJSON["utc"].as<unsigned long>();
       convertDateTime(rtc.now(), aiTimeUTC);
     }
 
     if (upsRequest.requestInProgress) {
       upsJSON = processUpsJSONResponse();
-      upsUTC = upsJSON["currentTimeUTC"].as<unsigned long>();
+      //upsUTC = upsJSON["currentTimeUTC"].as<unsigned long>();
       convertDateTime(rtc.now(), upsTimeUTC);
     }
     
@@ -259,12 +238,15 @@ void loop() {
       wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
       aiUTC = aiJSON["utc"].as<unsigned long>();
       upsUTC = upsJSON["currentTimeUTC"].as<unsigned long>();
-      safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + checkJSONage(upsUTC)
-            + (wxJSON["CloudCondition"].as<unsigned long>() - 1)
-            + (wxJSON["WindCondition"].as<unsigned long>() - 1)
-            + (upsJSON["powerFlag"].as<unsigned long>() - 1)
-            + (upsJSON["commFlag"].as<unsigned long>() - 1)
-            + getClassificationScore(aiJSON["classification"]);
+      safetyScore = 
+        checkJSONage(wxUTC) 
+        + checkJSONage(aiUTC) 
+        + checkJSONage(upsUTC)
+        + (wxJSON["CloudCondition"].as<unsigned long>() - 1)
+        + (wxJSON["WindCondition"].as<unsigned long>() - 1)
+        + (upsJSON["powerFlag"].as<unsigned long>())
+        + (upsJSON["commFlag"].as<unsigned long>())
+        + getClassificationScore(aiJSON["classification"]);
       #ifdef DEBUG
         Serial.print("safetyScore: ");
         Serial.println(safetyScore);
@@ -277,11 +259,11 @@ void loop() {
         Serial.print("CloudCondition: ");
         Serial.println(wxJSON["CloudCondition"].as<unsigned long>() - 1);
         Serial.print("WindCondition: ");
-        Serial.println(upsJSON["WindCondition"].as<unsigned long>() - 1);                
+        Serial.println(wxJSON["WindCondition"].as<unsigned long>() - 1);                
         Serial.print("powerFlag: ");
-        Serial.println(wxJSON["powerFlag"].as<unsigned long>() - 1); 
+        Serial.println(upsJSON["powerFlag"].as<unsigned long>()); 
         Serial.print("commFlag: ");
-        Serial.println(upsJSON["commFlag"].as<unsigned long>() - 1);         
+        Serial.println(upsJSON["commFlag"].as<unsigned long>());         
         Serial.print("classification: ");
         Serial.println(getClassificationScore(aiJSON["classification"]));
       #endif

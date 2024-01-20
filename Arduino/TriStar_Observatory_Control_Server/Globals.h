@@ -72,9 +72,9 @@ HTTPRequest upsRequest;
 
 
 // JSON Documents to hold responses from sources
-  DynamicJsonDocument wxJSON(512);
-  DynamicJsonDocument aiJSON(192);     
-  DynamicJsonDocument upsJSON(192);
+  DynamicJsonDocument wxJSON(400);
+  DynamicJsonDocument aiJSON(130);     
+  DynamicJsonDocument upsJSON(150);
 
   //  Setup for roof button
     #ifdef USEBUTTON
