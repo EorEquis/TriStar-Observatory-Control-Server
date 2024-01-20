@@ -161,10 +161,10 @@ void setup() {
         checkJSONage(wxUTC) 
         + checkJSONage(aiUTC) 
         + checkJSONage(upsUTC)
-        + (wxJSON["CloudCondition"].as<unsigned long>() - 1)
-        + (wxJSON["WindCondition"].as<unsigned long>() - 1)
-        + (upsJSON["powerFlag"].as<unsigned long>())
-        + (upsJSON["commFlag"].as<unsigned long>())
+        + (wxJSON["CloudCondition"].as<unsigned int>() - 1)
+        + (wxJSON["WindCondition"].as<unsigned int>() - 1)
+        + (upsJSON["powerFlag"].as<unsigned int>())
+        + (upsJSON["commFlag"].as<unsigned int>())
         + getClassificationScore(aiJSON["classification"]);
  
 //   Start watchdog
@@ -242,10 +242,10 @@ void loop() {
         checkJSONage(wxUTC) 
         + checkJSONage(aiUTC) 
         + checkJSONage(upsUTC)
-        + (wxJSON["CloudCondition"].as<unsigned long>() - 1)
-        + (wxJSON["WindCondition"].as<unsigned long>() - 1)
-        + (upsJSON["powerFlag"].as<unsigned long>())
-        + (upsJSON["commFlag"].as<unsigned long>())
+        + (wxJSON["CloudCondition"].as<unsigned int>() - 1)
+        + (wxJSON["WindCondition"].as<unsigned int>() - 1)
+        + (upsJSON["powerFlag"].as<unsigned int>())
+        + (upsJSON["commFlag"].as<unsigned int>())
         + getClassificationScore(aiJSON["classification"]);
       #ifdef DEBUG
         Serial.print("safetyScore: ");
@@ -257,13 +257,13 @@ void loop() {
         Serial.print("checkJSONage(upsUTC): ");
         Serial.println(checkJSONage(upsUTC));
         Serial.print("CloudCondition: ");
-        Serial.println(wxJSON["CloudCondition"].as<unsigned long>() - 1);
+        Serial.println(wxJSON["CloudCondition"].as<unsigned int>() - 1);
         Serial.print("WindCondition: ");
-        Serial.println(wxJSON["WindCondition"].as<unsigned long>() - 1);                
+        Serial.println(wxJSON["WindCondition"].as<unsigned int>() - 1);                
         Serial.print("powerFlag: ");
-        Serial.println(upsJSON["powerFlag"].as<unsigned long>()); 
+        Serial.println(upsJSON["powerFlag"].as<unsigned int>()); 
         Serial.print("commFlag: ");
-        Serial.println(upsJSON["commFlag"].as<unsigned long>());         
+        Serial.println(upsJSON["commFlag"].as<unsigned int>());         
         Serial.print("classification: ");
         Serial.println(getClassificationScore(aiJSON["classification"]));
       #endif
