@@ -3,13 +3,7 @@
   // Timing variables
     unsigned long lastWDT = millis();
     unsigned long lastRoof = millis();
-    unsigned long lastWX = millis();
-    unsigned long lastAI = millis();
     float elapsedMillisWDT = 0;
-    float elapsedMillisWX = 0;
-    float elapsedMillisAI = 0;
-    unsigned long wxUTC;
-    unsigned long aiUTC;
     
   // Initialize RTC
     RTC_DS3231 rtc;
@@ -33,29 +27,6 @@
     int roof_command(String command);           // Valid values are "open", "close", and "abort".  open and close return 0 (success) or 1 (failure)
     char requestTime[20];
     char roofStatusTime[20];
-    char wxTimeUTC[20];
-    char aiTimeUTC[20];
-//    String requestTime;                         // Strings to hold roof status and clinet request time, in case driver wants to compare for safety
-//    String roofStatusTime;
-//    String wxTimeUTC;
-//    String aiTimeUTC;
-    int safetyScore = 99;                       // A score that will be calculated from assigned values of various safety sources.
-                                                // E.G. Weather might be 0, 1, 2, 3 for Clear, Partly Cloudy, Cloudy, Rain
-                                                // This allows scores from multiple sources (Weather, AI, UPS, etc) to be added up, and a safety monitor to 
-                                                // have a "Max Score" variable above which conditions are unsafe.
-
-    
-    const char wxHost[] = "192.168.0.20";
-    const char wxPath[] = "/weatherdata/wxdata.txt";
-    const char AIHost[] = "allskyai.com";
-    const char AIPath[] = "/tfapi/v1/live?url=https://allsky.tristarobservatory.com/image.jpg";    
-
-    const char* classifications[] = {"clear", "light_clouds", "heavy_clouds", "precipitation"}; // AllSky AI classifications, so we can map score to index
-
-
-// JSON Documents to hold responses from sources
-  DynamicJsonDocument wxJSON(512);
-  DynamicJsonDocument aiJSON(192);     
 
   //  Setup for roof button
     #ifdef USEBUTTON

@@ -15,6 +15,7 @@ Modified :
           2024-01-10 Eor : Add timestamp, formatting is balls, will fix it some day (We all know I probably won't)
           2024-01-12 Eor : Stripping out a bunch of stuff for a cleaner "roof control box"
           2024-01-14 Eor : Begin multi-source safety implementation
+          2024-01-21 Eor : Reverting to a simple roof controller
 */
 
 // Includes
@@ -23,7 +24,6 @@ Modified :
     #include <aREST.h>
     #include <avr/wdt.h>  
     #include <EthernetUdp.h> 
-    #include <ArduinoJson.h> 
     #include <RTClib.h>
     #include <SPI.h>
 
@@ -109,10 +109,7 @@ void setup() {
   
       rest.variable("requestTimeUTC", &requestTime);
       rest.variable("shutterState", &shutterState);
-      rest.variable("safetyScore", &safetyScore);
       rest.variable("roofStatusTimeUTC", &roofStatusTime);    
-      rest.variable("wxTimeUTC", &wxTimeUTC);
-      rest.variable("aiTimeUTC", &aiTimeUTC);
           
     // Declare functions to be exposed to the API
       rest.function("roof_command", roof_command);
@@ -122,22 +119,6 @@ void setup() {
       shutterState = getRoofInfo();
       lastRoof = millis();
       convertDateTime(rtc.now(), roofStatusTime);
-    // Weather
-      wxJSON = readJSON(wxHost, wxPath);
-      lastWX = millis();
-      convertDateTime(rtc.now(), wxTimeUTC);
-    // AI
-      aiJSON = readJSON(AIHost, AIPath);
-      lastAI = millis();
-      convertDateTime(rtc.now(), aiTimeUTC);
-  
-    // First safety score
-      wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
-      safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
-      #ifdef DEBUG
-        Serial.print("safetyScore is ");
-        Serial.println(safetyScore);
-      #endif    
   
   // Start watchdog
     wdt_disable();        // Disable the watchdog and wait for more than 2 seconds
@@ -147,7 +128,6 @@ void setup() {
 
 
 void loop() {
-  safetyScore = 0;
   // Get roof info
     if (millis() - lastRoof > roofInfoDelay)
       {
@@ -182,28 +162,6 @@ void loop() {
         convertDateTime(rtc.now(), roofStatusTime);        
       }   // end if millis
 
-  if (millis() - lastWX >= pollWXEvery)
-    {
-      wxJSON = readJSON(wxHost, wxPath);
-      lastWX = millis();
-      convertDateTime(rtc.now(), wxTimeUTC);
-      //wxTimeUTC = convertDateTime(rtc.now());
-    }
-
-  if (millis() - lastAI >= pollAIEvery)
-    {
-      aiJSON = readJSON(AIHost, AIPath);
-      lastAI = millis();
-      convertDateTime(rtc.now(), aiTimeUTC);
-      //aiTimeUTC = convertDateTime(rtc.now());
-    }
-
-  // Calculate the safety score
-
-    wxUTC = wxJSON["LastWrite_timestamp"].as<unsigned long>();
-    aiUTC = aiJSON["utc"].as<unsigned long>();
-    safetyScore = checkJSONage(wxUTC) + checkJSONage(aiUTC) + (wxJSON["CloudCondition"].as<unsigned long>() - 1) + (wxJSON["WindCondition"].as<unsigned long>() - 1) + getClassificationScore(aiJSON["classification"]);  
-      
   // Pet the dog
     if (millis() - lastWDT >= resetWatchdogEvery)
       {
